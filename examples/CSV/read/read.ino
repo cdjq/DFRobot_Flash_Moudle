@@ -47,24 +47,29 @@ void setup() {
   Serial.println("done.");
 
   myFile = flash.open("TEST.CSV", FILE_WRITE);
-  csv = DFRobot_CsvFile(&myFile);
-  if(!csv){
-    Serial.println("error opening TEST.CSV");
-    while(1) yield();
-  }
-  uint8_t ret = csv.begin();
+  uint8_t ret = csv.begin(&myFile);
   if(ret != 0){
     Serial.print("csv initialize fail, ret=");
     Serial.println(ret);
     while(1) yield();
   }
-  //int row = csv.getRow();
-  //int column = csv.getColumn();
-   Serial.print("Number of rows: ");
-   //Serial.println(row);
-   Serial.print("Columns in the first row: ");
-   //Serial.println(column);
+  int row = csv.getRow();
+  int column = csv.getColumn();
+  Serial.print("Number of rows: ");
+  Serial.println(row);
+  Serial.print("Columns in the first row: ");
+  Serial.println(column);
 
+  String rowdata = csv.readRow(/*row = */1);//读取第一行数据
+  Serial.print("First row data: ");
+  Serial.println(rowdata);
+  String coldata = csv.readColumn(/*col = */1);//读取第一列数据
+  Serial.print("First column data: ");
+  Serial.println(coldata);
+  String itemData = csv.readItem(/*row = */1, /*col = */1);//读取第一列数据
+  Serial.print("1 row and 1 column data: ");
+  Serial.println(itemData);
+  myFile.close();
 }
 
 void loop() {
