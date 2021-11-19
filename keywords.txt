@@ -1,0 +1,99 @@
+#######################################
+# Syntax Coloring Map For DFRobot_Flash_Moudle
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DFRobot_CsvFile	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+DFRobot_CsvFile	KEYWORD2
+begin	KEYWORD2
+getRow	KEYWORD2
+getColumn	KEYWORD2
+getRowsAndColumns	KEYWORD2
+readRow	KEYWORD2
+writeRow KEYWORD2
+deleteRow KEYWORD2
+readColumn	KEYWORD2
+writeColumn	KEYWORD2
+deleteColumn	KEYWORD2
+readItem	KEYWORD2
+writeItem	KEYWORD2
+deleteItem	KEYWORD2
+print KEYWORD2
+println KEYWORD2
+
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+eLargestRow LITERAL1
+eLargestColumn	LITERAL1
+eSmallestRow	LITERAL1
+eSmallestColumn	LITERAL1
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DFRobot_File	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+name	KEYWORD2
+write	KEYWORD2
+read	KEYWORD2
+peek	KEYWORD2
+flush	KEYWORD2
+available	KEYWORD2
+seek KEYWORD2
+position KEYWORD2
+size	KEYWORD2
+close	KEYWORD2
+isDirectory	KEYWORD2
+del	KEYWORD2
+insert	KEYWORD2
+openNextFile	KEYWORD2
+rewindDirectory KEYWORD2
+
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DFRobot_FlashMoudle	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+open	KEYWORD2
+exists	KEYWORD2
+mkdir   KEYWORD2
+remove	KEYWORD2
+rmdir	KEYWORD2
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DFRobot_FlashMoudle_IIC	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin	KEYWORD2
