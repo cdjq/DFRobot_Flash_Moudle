@@ -43,12 +43,8 @@ void setup() {
   Serial.println("done.");
 
   myFile = flash.open("TEST.CSV", FILE_WRITE);
-  csv = DFRobot_CsvFile(&myFile);
-  if(!csv){
-    Serial.println("error opening TEST.CSV");
-    while(1) yield();
-  }
-  uint8_t ret = csv.begin();
+  
+  uint8_t ret = csv.begin(&myFile);
   if(ret != 0){
     Serial.print("csv initialize fail, ret=");
     Serial.println(ret);

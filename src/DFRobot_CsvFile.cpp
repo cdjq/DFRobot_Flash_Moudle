@@ -47,13 +47,10 @@ uint8_t DFRobot_CsvFile::begin(DFRobot_File *file){
     CSV_DBG("rewind file start position failed.");
     return 4;
   }
-  Serial.print("pos=");Serial.println(pos);
-  Serial.print("total=");Serial.println(total);
   memset(_ache, 0, ACHE_BUFFER_LEN);
   while(total){
     int remain = total > (ACHE_BUFFER_LEN - 1) ? (ACHE_BUFFER_LEN - 1) : total;
     total -= remain;
-    Serial.print("remain=");Serial.println(remain);
     if(_file->read(_ache, remain) == remain){
       char *pc = _ache;
       while(remain--){
@@ -71,12 +68,8 @@ uint8_t DFRobot_CsvFile::begin(DFRobot_File *file){
         if(*pc == '\r') flag = true;
         if((*pc == '\n') && flag){
           colIndex += 1;
-          //Serial.print("colIndex=");Serial.println(colIndex);
-          //Serial.print("_columnNum=");Serial.println(_columnNum);
           _columnNum = _columnNum > colIndex ? _columnNum : colIndex;
-          //Serial.print("_columnNum=");Serial.println(_columnNum);
           _rowNum += 1;
-          //Serial.print("_rowNum=");Serial.println(_rowNum);
           colIndex = 0;
           rowDataLen = 0;
         }
@@ -89,7 +82,6 @@ uint8_t DFRobot_CsvFile::begin(DFRobot_File *file){
 
     }else{
       CSV_DBG("read data length failed.");
-
       return 5;
     }
     yield();
@@ -100,9 +92,11 @@ uint8_t DFRobot_CsvFile::begin(DFRobot_File *file){
     _rowNum += 1;
   }
   CSV_DBG("file: ", _file->name(), "is not csv format type.");
+  if(!_file->seek(pos)){
+    CSV_DBG("rewind file init position failed.");
+    return 6;
+  }
   return 0;
-  
-  
 }
 
 int DFRobot_CsvFile::getRow(){
@@ -126,7 +120,7 @@ String DFRobot_CsvFile::readRow(int row){
   _file->seek(0);
   total = _file->available();
   while(total){
-    int remain = total > ACHE_BUFFER_LEN ? ACHE_BUFFER_LEN : total;
+    int remain = total > (ACHE_BUFFER_LEN - 1) ? (ACHE_BUFFER_LEN - 1) : total;
     total -= remain;
     if(_file->read(_ache, remain) == remain){
       char *pc = _ache;
@@ -140,12 +134,15 @@ String DFRobot_CsvFile::readRow(int row){
           flag = true;
         }else if((*pc == '\n') && flag){
           rowi += 1; 
+          
         }else{
           flag = false;
         }
         pc++;
         yield();
       }
+    }else{
+      return rslt;
     }
     yield();
   }
@@ -177,11 +174,14 @@ bool DFRobot_CsvFile::writeRow(int row, const char *rowData){
       if(_rowNum == row){
         println(rowData);
         return true;
-      }else{
+      }else if(_rowNum < row){
         println();
         _rowNum += 1;
+      }else{
+        return false;
       }
     }
+    yield();
   }else{
     //替换
      uint32_t posStart = 0, posEnd = 0, remain = size, total = size;
@@ -189,10 +189,9 @@ bool DFRobot_CsvFile::writeRow(int row, const char *rowData){
      bool flag = false;
      _file->seek(0);
      posStart = _file->position();//记录当前位置
+     posEnd = posStart;
      while(total){
        remain = (uint8_t)(total > ACHE_BUFFER_LEN ? ACHE_BUFFER_LEN : total);
-       posStart = _file->position();
-       posEnd = posStart;
        total -= remain;
        if(_file->read(_ache, remain) == remain){
          char *pc = _ache;
@@ -203,30 +202,33 @@ bool DFRobot_CsvFile::writeRow(int row, const char *rowData){
             }else if((*pc == '\n') && (flag == true)){
               if(rowi == row){
                 if((strlen(rowData) + 2) == (posEnd - posStart)){
-                  _file->seek(posStart);
+                  if(!_file->seek(posStart)) return false;
                   println(rowData);
                   return true;
                 }else if((strlen(rowData) + 2) < (posEnd - posStart)){
-                  _file->seek(posStart);
+                  if(!_file->seek(posStart)) return false;
                   println(rowData);
-                  _file->del(posEnd, (posEnd - posStart) - (strlen(rowData) + 2), true);
+                  if(!_file->del(posEnd, (posEnd - posStart) - (strlen(rowData) + 2), true)) return false;
                   return true;
                 }else{
-                  _file->insert(posEnd, (uint8_t)' ', (strlen(rowData) + 2) - (posEnd - posStart));
-                  _file->seek(posStart);
+                  if(!_file->insert(posEnd, (uint8_t)' ', (strlen(rowData) + 2) - (posEnd - posStart))) return false;
+                  if(!_file->seek(posStart)) return false;
                   println(rowData);
                   return true;
                 }
-
+                //posEnd = posStart + strlen(rowData) + 2;
+                //_file->seek(posEnd);
               }
               rowi += 1;
-  
+              posStart = posEnd;//记录当前位置
             }else{
               flag = false;
             }
             pc++;
+            yield();
          }
        }else return false;   
+       yield();
      }
      //跑到这里说明是最后一行，且最后一行没有\r\n
      if(rowi == row){
@@ -259,10 +261,9 @@ bool DFRobot_CsvFile::deleteRow(int row){
   bool flag = false;
   _file->seek(0);
   posStart = _file->position();//记录当前位置
+  posEnd = posStart;
   while(total){
     remain = (uint8_t)(total > ACHE_BUFFER_LEN ? ACHE_BUFFER_LEN : total);
-    posStart = _file->position();
-    posEnd = posStart;
     total -= remain;
     if(_file->read(_ache, remain) == remain){
       char *pc = _ache;
@@ -278,13 +279,15 @@ bool DFRobot_CsvFile::deleteRow(int row){
               flag = false;
           }
           rowi += 1;
+          posStart = posEnd;
         }else{
           flag = false;
         }
         pc++;
+        yield();
       }
     }else break;
-    
+    yield();
   }
   if((rowi == row) && (posEnd - posStart > 0)){
     _file->del(posEnd, (posEnd - posStart) , true);
@@ -329,7 +332,9 @@ String DFRobot_CsvFile::readColumn(int col){
         if((icol == col) && (*pc != ',') && (*pc != '\r') && (*pc != '\n')){
           str += *pc;
         }
+        pc += 1;
       }
+      
     }else return "";
   }
   if(rowindex < rowi){
@@ -366,7 +371,6 @@ LOOP:
                 if((uint32_t)(pe - ps) == posEnd - posStart){
                   _file->seek(posStart);
                   _file->write(ps,(uint32_t)(pe - ps));
-                  
                 }else if((uint32_t)(pe - ps) < posEnd - posStart){
                   _file->seek(posStart);
                   _file->write(ps, (uint32_t)(pe - ps));
@@ -533,19 +537,30 @@ String DFRobot_CsvFile::readItem(int row, int col){
     return "";
   }
   String str = "";
+  if(!_file->seek(0)){
+    CSV_DBG("rewind file start position failed.");
+    return str;
+  }
+  memset(_ache, 0, ACHE_BUFFER_LEN);
   uint32_t total = _file->size();
   uint16_t remain;
   int icol = 1;
+  int irow = 1;
   bool flag = false;
-  for(int irow = 1; irow < row + 1;){
-    remain = (uint16_t)(total > ACHE_BUFFER_LEN ? ACHE_BUFFER_LEN : total);
+  while(total){
+    remain = (uint16_t)(total > (ACHE_BUFFER_LEN - 1) ? (ACHE_BUFFER_LEN - 1) : total);
+    total -= remain;
     if(_file->read(_ache, remain) != remain){
       CSV_DBG("read error.");
       return "";
     }
     char *pc = _ache;
     while(remain--){
-      if(*pc == ',') icol += 1;
+      if(*pc == ',') {
+        icol += 1;
+        pc += 1;
+        continue;
+      }
       if(*pc == '\r') flag = true;
       if((flag = true) && (*pc == '\n')) {
         if((irow == row) && (icol == col)){
@@ -559,8 +574,11 @@ String DFRobot_CsvFile::readItem(int row, int col){
         str += *pc;
       }
       if((irow == row) && (icol > col)) return str;
+      if(irow > row) return str;
       pc ++;
+      yield();
     }
+    yield();
   }
   return str;
   
@@ -741,17 +759,8 @@ size_t DFRobot_CsvFile::write(const uint8_t *buf, size_t size)
   }
   
   char *pc = (char *)buf;
-  //DBG(pc);
-  //Serial.print("size=%d");
-  //Serial.println(size);
-  //for(int i = 0; i < size; i++){
-  //  Serial.print(buf[i]);
-  //  Serial.print(", ");
-  //}
-  //Serial.println();
   uint32_t pos = _file->position();
   if((size == 2) && (String(pc) == "\r\n")){//查看前一个数据是否为逗号
-    //Serial.println("ok");
     if(pos > 0){
       _file->seek(pos - 1);
       if(_file->peek() != ',') _file->seek(pos);
@@ -773,12 +782,9 @@ DFRobot_CsvFile::operator bool() {
 
 
 size_t DFRobot_CsvFile::printNumber(unsigned long, uint8_t){
-  Serial.println("++++++++++++++++++++++++++1");
   return 0;
-  
 }
 size_t DFRobot_CsvFile::printFloat(double, uint8_t){
-  Serial.println("++++++++++++++++++++++++++");
   return 0;
 }
 

@@ -18,16 +18,16 @@ getRow	KEYWORD2
 getColumn	KEYWORD2
 getRowsAndColumns	KEYWORD2
 readRow	KEYWORD2
-writeRow KEYWORD2
-deleteRow KEYWORD2
+writeRow	KEYWORD2
+deleteRow	KEYWORD2
 readColumn	KEYWORD2
 writeColumn	KEYWORD2
 deleteColumn	KEYWORD2
 readItem	KEYWORD2
 writeItem	KEYWORD2
 deleteItem	KEYWORD2
-print KEYWORD2
-println KEYWORD2
+print	KEYWORD2
+println	KEYWORD2
 
 
 #######################################
@@ -38,7 +38,7 @@ println KEYWORD2
 #######################################
 # Constants (LITERAL1)
 #######################################
-eLargestRow LITERAL1
+eLargestRow	LITERAL1
 eLargestColumn	LITERAL1
 eSmallestRow	LITERAL1
 eSmallestColumn	LITERAL1
@@ -67,7 +67,7 @@ isDirectory	KEYWORD2
 del	KEYWORD2
 insert	KEYWORD2
 openNextFile	KEYWORD2
-rewindDirectory KEYWORD2
+rewindDirectory	KEYWORD2
 
 
 #######################################
@@ -83,7 +83,7 @@ DFRobot_FlashMoudle	KEYWORD1
 begin	KEYWORD2
 open	KEYWORD2
 exists	KEYWORD2
-mkdir   KEYWORD2
+mkdir	KEYWORD2
 remove	KEYWORD2
 rmdir	KEYWORD2
 

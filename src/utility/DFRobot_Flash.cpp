@@ -178,6 +178,7 @@ static bool waitForTimeout(uint8_t reg, uint8_t *len, uint32_t timems){
         return false;
       }
       delay(50);
+      yield();
     }
     return true;
 }
@@ -716,6 +717,7 @@ static uint16_t insertCommand(int8_t id, uint32_t pos, void *data, uint32_t len)
       pBuf += len;
       count += len;
       pos += len;
+      yield();
       
     }
     free(buf);
@@ -772,12 +774,13 @@ static uint16_t writeFileCommand(int8_t id, void *data, uint16_t len){
       remain -= len;
       pBuf += len;
       count += len;
+      yield();
       
     }
-    /*if(!syncFileCommand(id)){
+    if(!syncFileCommand(id)){
       free(buf);
       return t - count;
-    }*/
+    }
     free(buf);
     return t;
 }
@@ -823,6 +826,7 @@ static uint16_t readFileCommand(int8_t id, void *data, uint16_t len){
     pBuf += len;
     t += len;
     remain -= len;
+    yield();
   }
   free(buf);
   return t;
@@ -1006,7 +1010,7 @@ uint8_t DFRobot_Flash::init(DFRobot_Driver *drv){
         FLASH_DBG("RESET FAILED. Error: (2 << 4)");
         return (2 << 4);
     }
-    delay(2000);//复位后1s内不再接收数据
+    //delay(2000);//复位后1s内不再接收数据
 
     if(!flashInfoCommand(&_fatType, &_capacity, &_freeSpace, &_fileNums)){
       FLASH_DBG("get flash info cmd pakage failed! Error: (3 << 4)");
@@ -1128,8 +1132,8 @@ bool DFRobot_FlashFile::isOpen(){
 size_t DFRobot_FlashFile::write(const void* buf, uint16_t nbyte){
     if(!isFile() || !(_authority & AUTH_O_WRITE)) return 0;
     uint16_t t = writeFileCommand(_id, (void *)buf, nbyte);
-    _curPosition += t;
-    _size  += t;
+     _curPosition += t;
+    _size  = _size > _curPosition ? _size : _curPosition;
     return t;
 }
 
