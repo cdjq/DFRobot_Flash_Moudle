@@ -53,7 +53,8 @@ uint8_t DFRobot_CsvFile::begin(DFRobot_File *file){
     total -= remain;
     if(_file->read(_ache, remain) == remain){
       char *pc = _ache;
-      while(remain--){
+      while(remain){
+        remain -= 1;
         rowDataLen += 1;
         if((int)*pc == -1){
           colIndex += 1;
@@ -124,7 +125,8 @@ String DFRobot_CsvFile::readRow(int row){
     total -= remain;
     if(_file->read(_ache, remain) == remain){
       char *pc = _ache;
-      while(remain--){
+      while(remain){
+        remain -= 1;
         if(rowi > row){
           return rslt; //返回每行数据
         }else if(row == rowi){
@@ -195,7 +197,8 @@ bool DFRobot_CsvFile::writeRow(int row, const char *rowData){
        total -= remain;
        if(_file->read(_ache, remain) == remain){
          char *pc = _ache;
-         while(remain--){
+         while(remain){
+            remain -= 1;
             posEnd += 1;
             if(*pc == '\r'){
               flag = true;
@@ -267,7 +270,8 @@ bool DFRobot_CsvFile::deleteRow(int row){
     total -= remain;
     if(_file->read(_ache, remain) == remain){
       char *pc = _ache;
-      while(remain--){
+      while(remain){
+        remain -= 1;
         posEnd += 1;
         if(*pc == '\r'){
           flag = true;
@@ -312,7 +316,8 @@ String DFRobot_CsvFile::readColumn(int col){
     total -= remain;
     if(_file->read(_ache, remain) == remain){
       char *pc = _ache;
-      while(remain--){
+      while(remain){
+        remain -= 1;
         posEnd += 1;
         if(*pc == ','){
           icol += 1;
@@ -347,183 +352,261 @@ bool DFRobot_CsvFile::writeColumn(int col, const char *colData){
   //按顺序写列
   if(col < (int)eSmallestColumn || col > (int)eLargestColumn || (strlen(colData) == 0)) return false;
   int icol = 1;
-  char *ps = (char *)colData;
-  char *pe = ps;
-  uint32_t posStart = 0, posEnd = 0;
-  uint32_t total = strlen(colData);
+  int irow = 1;
+  int row = 0;
+  uint32_t size = strlen(colData);
+  uint32_t posStart = 0, posEnd = 0, remain = 0, total =  _file->size();
+  char *pdata = (char *)colData;
+  char *ps = pdata;
   bool flag = false;
-
+  int head = 0, tail = 0;
   _file->seek(0);
-
-
-  for(uint32_t i =  0; i < total; i++){
-    if((*pe == '\r') &&((i + 1 >= total) || (*(pe+1) != '\n'))) return false;
-    if(*pe == '\r'){
-      //某行某列
-LOOP:
-      char cv = _file->peek();
-      posStart = _file->position();
-      posEnd = posStart;
-      switch(cv){
-        case ',':
-              if(icol == col){
-                posEnd = _file->position();
-                if((uint32_t)(pe - ps) == posEnd - posStart){
-                  _file->seek(posStart);
-                  _file->write(ps,(uint32_t)(pe - ps));
-                }else if((uint32_t)(pe - ps) < posEnd - posStart){
-                  _file->seek(posStart);
-                  _file->write(ps, (uint32_t)(pe - ps));
-                  _file->del(posEnd, (posEnd - posStart) - (uint32_t)(pe - ps), true);
-                }else{
-                  _file->insert(posEnd, (uint8_t)' ' , (uint32_t)(pe - ps) - (posEnd - posStart));
-                  _file->seek(posStart);
-                  _file->write(ps, (uint32_t)(pe - ps));
-                }
-              }
-              _file->read();
-              icol += 1;
-              posStart = _file->position();
-              posEnd = posStart;
-              flag = false;
-              break;
-        case '\r':
-        {
-          posEnd = _file->position();
-          flag = true;
-          _file->read();
-          break;
-        }
-        case '\n':
-        {
-          if(flag == true){
-            //
-            if(icol < col){
-              _file->insert(posEnd, (uint8_t)',' , col-icol);
-              icol = col;
-              posStart = _file->position();
-              
-            }
-            
-            if(icol == col){
-              posEnd = _file->position();
-              if((uint32_t)(pe - ps) == posEnd - posStart){
-                  _file->seek(posStart);
-                  _file->write(ps, (uint32_t)(pe - ps));
-              }else if((uint32_t)(pe - ps) < posEnd - posStart){
-                  _file->seek(posStart);
-                  _file->write(ps, (uint32_t)(pe - ps));
-                  _file->del(posEnd, (posEnd - posStart) - (uint32_t)(pe - ps), true);
-              }else{
-                  _file->insert(posEnd, (uint8_t)' ' , (uint32_t)(pe - ps) - (posEnd - posStart));
-                  _file->seek(posStart);
-                  _file->write(ps, (uint32_t)(pe - ps));
-              }
-              _file->read();
-            }
-            icol = 1;
-            posStart = _file->position() + 1;
-            posEnd = posStart;
-          }
-          flag = false;
-          _file->read();
-          goto ENDLOOP;
-        }
-        case 255:
-        {
-          //
-          if(icol < col){
-            posEnd = _file->position();
-            _file->insert(posEnd, (uint8_t)',' , col-icol);
-            icol = col;
-            posStart = _file->position();
-          }
+  posStart = _file->position();//记录当前位置
+  posEnd = posStart;
+  while(total){
+    remain = (uint16_t)(total > (ACHE_BUFFER_LEN - 1) ? (ACHE_BUFFER_LEN - 1) : total);
+    total -= remain;
+    if(_file->read(_ache, remain) == remain){
+      char *pc = _ache;
+      while(remain){
+        remain -= 1;
+        posEnd += 1;
+        if(*pc == ','){
           if(icol == col){
-              posEnd = _file->position();
-              if((uint32_t)(pe - ps) == posEnd - posStart){
-                  _file->seek(posStart);
-                  _file->write(ps, (uint32_t)(pe - ps));
-              }else if((uint32_t)(pe - ps) < posEnd - posStart){
-                  _file->seek(posStart);
-                  _file->write(ps, (uint32_t)(pe - ps));
-                  _file->del(posEnd, (posEnd - posStart) - (uint32_t)(pe - ps), true);
-              }else{
-                  _file->insert(posEnd, (uint8_t)' ' , (uint32_t)(pe - ps) - (posEnd - posStart));
-                  _file->seek(posStart);
-                  _file->write(ps, (uint32_t)(pe - ps));
+            posEnd -= 1;
+            tail = 0;
+            while(size){
+              size -= 1;
+              tail += 1;
+              if(*pdata == '\r') flag = true;
+              if(flag && (*pdata == '\n')) {
+                flag = false;
+                tail -= 2;
+                break;
               }
-              println();
+              if(flag && (*pdata != '\r')) flag = false;
+              pdata++;
+              yield();
+            }
+            Serial.print("1size=");Serial.println(size);
+            if(tail ==  (posEnd - posStart)){
+              _file->seek(posStart);
+              _file->write((const uint8_t *)ps, tail);
+            }else if(tail < (posEnd - posStart)){
+              _file->del(posEnd,((posEnd - posStart) - tail),true);
+              _file->seek(posStart);
+              _file->write((const uint8_t *)ps, tail);
+              posEnd -= (posEnd - posStart) - tail;
+            }else{
+              _file->insert(posEnd, (uint8_t)' ', (tail - (posEnd - posStart)));
+              _file->seek(posStart);
+              _file->write((const uint8_t *)ps, tail); 
+              posEnd += tail - (posEnd - posStart);
+            }
+            ps = pdata +1;
+            posEnd += 1;
+            if(size == 0) return true;
           }
-          goto ENDLOOP;
-
+          posStart = posEnd;
+          icol += 1;
         }
-        default:
-          _file->read();
-          break;
-
+        if(*pc == '\r') flag = true;
+        if(flag && *pc == '\n') {
+          flag = false;
+          if(icol <= col){
+            tail = 0;
+            posEnd -= 2;
+            while(size){
+              size -= 1;
+              tail += 1;
+              if(*pdata == '\r') flag = true;
+              if(flag && *pdata == '\n') {
+                flag = false;
+                tail -= 2;
+                break;
+              }
+              if(flag && *pdata != '\r') flag = false;
+              pdata++;
+            }
+            Serial.print("2size=");Serial.println(size);
+            if(icol < col){
+              _file->insert(posEnd, (uint8_t)',', col - icol + tail);
+              posStart += col - icol;
+              posEnd = posStart + tail;
+            }
+            if(tail ==  (posEnd - posStart)){
+              _file->seek(posStart);
+              _file->write((const uint8_t *)ps, tail);
+            }else if(tail < (posEnd - posStart)){
+              _file->del(posEnd,((posEnd - posStart) - tail),true);
+              _file->seek(posStart);
+              _file->write((const uint8_t *)ps, tail);
+              posEnd -= (posEnd - posStart) - tail;
+            }else{
+              _file->insert(posEnd, (uint8_t)' ', (tail - (posEnd - posStart)));
+              _file->seek(posStart);
+              _file->write((const uint8_t *)ps, tail);
+              posEnd += tail - (posEnd - posStart);
+            }
+            posEnd += 2;
+            ps = pdata + 1;
+            if(size == 0) return true;
+          }
+          posStart = posEnd;
+          icol = 1;
+          irow += 1;
+        }
+        if(flag && flag != '\r') flag = true;
+        pc += 1;
       }
-      goto LOOP;
+      yield();
     }
-  ENDLOOP:
-    ps = pe + 2;
-    pe = ps;
+    yield();
   }
-  if(ps != pe){
-    _file->seek(posStart);
-    _file->write(ps, (uint32_t)(pe - ps));
-    println();
+  if(irow == _rowNum){
+    tail = 0;
+    while(size){
+      size -= 1;
+      tail += 1;
+      if(*pdata == '\r') flag = true;
+      if(flag && *pdata == '\n') {
+        flag = false;
+        tail -= 2;
+        break;
+      }
+      if(flag && *pdata != '\r') flag = false;
+      pdata++;
+      yield();
+    }
+    if(icol < col){
+      _file->insert(posEnd, (uint8_t)',', col - icol + tail);
+      posStart += col - icol;
+      posEnd = posStart + tail;
+    }
+    if(tail ==  (posEnd - posStart)){
+      _file->seek(posStart);
+      _file->write((const uint8_t *)ps, tail);
+    }else if(tail < (posEnd - posStart)){
+      _file->del(posEnd,((posEnd - posStart) - tail),true);
+      _file->seek(posStart);
+      _file->write((const uint8_t *)ps, tail);
+      posEnd -= (posEnd - posStart) - tail;
+    }else{
+      _file->insert(posEnd, (uint8_t)' ', (tail - (posEnd - posStart)));
+      _file->seek(posStart);
+      _file->write((const uint8_t *)ps, tail);
+      posEnd += tail - (posEnd - posStart);
+    }
+    if(size == 0) return true;   
+    irow += 1;
+    icol = 1;
+    posStart = posEnd;
   }
+  tail = 0;
+  Serial.print("size=");Serial.println(size);
+  while(size){
+    size -= 1;
+    tail += 1;
+    posEnd += 1;
+    Serial.print(flag);Serial.print(", ");
+    Serial.println(*pdata,HEX);
+    if(*pdata == '\r') {
+      Serial.print("++++++++++++++++++++++++++++++++");
+      flag = true;
+      Serial.println(flag);
+    }
+    if(flag && (*pdata == '\n')) {
+      flag = false;
+      Serial.print("icol=");Serial.print(icol);Serial.print(", col=");Serial.print(col);Serial.print(", posStart=");Serial.print(posStart);
+      Serial.print(", tail=");Serial.print(tail);
+      Serial.print(", posEnd=");Serial.println(posEnd);
+      if(icol < col){
+        _file->insert(posEnd, (uint8_t)',', col - icol + tail);
+        posStart += col - icol;
+        posEnd = posStart + tail;
+      }
+      Serial.print("posStart=");Serial.println(posStart);
+      _file->seek(posStart);
+      _file->write((const uint8_t *)ps, tail);
+      ps = pdata + 1;
+      _rowNum = _rowNum > irow ? _rowNum : irow;
+      _columnNum = _columnNum > icol ? _columnNum : icol;
+      if(size == 0) return true;
+      icol = 1;
+      irow += 1;
+      tail = 0;
+      posStart = posEnd;
+    }
+    if(flag && (*pdata != '\r')) flag = false;
+    //posStart = posEnd;
+    
+    pdata++;
+    yield();
+  }
+  Serial.print("posStart=");Serial.print(posStart);
+  Serial.print(", tail=");Serial.println(tail);
+  if(icol < col){
+    _file->insert(posEnd, (uint8_t)',', col - icol + tail);
+    posStart += col - icol;
+    posEnd = posStart + tail;
+  }
+  _file->seek(posStart);
+  _file->write((const uint8_t *)ps, tail);
+  println();
 
   return true;
 }
 
 bool DFRobot_CsvFile::deleteColumn(int col){
   if(col < (int)eSmallestColumn || col > _columnNum) return false;
-  uint32_t size = _file->size();
-  uint32_t posStart = 0, posEnd = 0, remain = size, total = size;
-  int rowi = 1;
+  uint32_t posStart = 0, posEnd = 0, remain = 0, total =  _file->size();
+  int irow = 1;
   int icol = 1;
-  int rowindex = 0;
   bool flag = false;
   _file->seek(0);
   posStart = _file->position();//记录当前位置
   posEnd = posStart;
-  for(int i = 1; i < _rowNum + 1; ){
-    char cv = _file->read();
-    if((int)cv == -1){
-      if(icol == col){
-        posEnd = _file->position();
-        _file->del(posEnd, posEnd - posStart, true);
-        i += 1;
-        icol = 1;
-        if(i != _rowNum + 1) return false;
-      }
-    }
-    if(cv == ','){
-      if(icol == col){
-        posEnd = _file->position();
-        _file->del(posEnd, posEnd - posStart, true);
-      }
-      icol += 1;
-    }
-    if(cv == '\r'){
-      flag = true;
-    }
-    if((cv == '\n') && (flag == true)){
-      if(icol == col){
-        posEnd = _file->position() - 2;
-        if(posEnd - posStart){
-          _file->del(posEnd, posEnd - posStart, true);
-          _file->read(_ache, 2);
+  while(total){
+    remain = (uint16_t)(total > (ACHE_BUFFER_LEN - 1) ? (ACHE_BUFFER_LEN - 1) : total);
+    total -= remain;
+    if(_file->read(_ache, remain) == remain){
+      char *pc = _ache;
+      while(remain){
+        remain -= 1;
+        posEnd += 1;
+        if(*pc == ','){
+          if(icol == col) {
+            _file->del(posEnd, (posEnd - posStart), true);
+            posEnd = posStart;
+          }
+          posStart = posEnd;
+          icol += 1;
         }
+        if(*pc == '\r') flag = true;
+        if(flag && *pc == '\n'){
+          if(icol == col){
+            if(icol == 1){
+              _file->del(posEnd, (posEnd - posStart), true);
+              posEnd = posStart;
+            }else{
+              posEnd -= 2;
+              _file->del(posEnd, (posEnd - posStart + 1), true);//清除最后一行的逗号
+              posEnd = posStart - 1 + 2;
+            }
+          }
+          posStart = posEnd;
+          icol = 1;
+          irow += 1;
+        }
+        if(flag && *pc != '\r') flag = false;
+        pc ++;
+        yield();
       }
-      icol = 1;
-      i += 1;
     }
-    if(flag && (cv != '\r')){
-      flag = false;
-    }
+    yield();
   }
+  if((irow == _rowNum) &&  (icol == col)) _file->del(posEnd, (posEnd - posStart), true);
+  _columnNum -= 1;
   return true;
 }
 
@@ -555,21 +638,22 @@ String DFRobot_CsvFile::readItem(int row, int col){
       return "";
     }
     char *pc = _ache;
-    while(remain--){
+    while(remain){
+      remain -= 1;
       if(*pc == ',') {
         icol += 1;
         pc += 1;
         continue;
       }
       if(*pc == '\r') flag = true;
-      if((flag = true) && (*pc == '\n')) {
+      if((flag == true) && (*pc == '\n')) {
         if((irow == row) && (icol == col)){
           return str.substring(0,str.length()-1);
         }
         icol = 1;
         irow += 1;
       }
-      if((flag = true) && (*pc != '\r')) flag = false;
+      if((flag == true) && (*pc != '\r')) flag = false;
       if((irow == row) && (icol == col)){
         str += *pc;
       }
@@ -593,11 +677,8 @@ bool DFRobot_CsvFile::writeItem(int row, int col, const char *item){
     CSV_DBG("col out of range.(1,26)");
     return false;
   }
-  String str = "";
   uint32_t total = _file->size();
   uint16_t remain;
-  int icol = 1;
-  bool flag = false;
   if(row > _rowNum){
     //判断第_rowNum行，末尾有没有\r\n,如果没有请给最后一行添加/r/n
     if(total >= 2){//可能会有
@@ -628,64 +709,110 @@ bool DFRobot_CsvFile::writeItem(int row, int col, const char *item){
     }
   }else{
     uint32_t posStart = 0, posEnd = 0;
+    bool flag = false;
+    int icol = 1, irow = 1;
     _file->seek(0);
     posStart = _file->position();
     posEnd = posStart;
-    int icol = 1;
-    for(int irow = 1; irow < row + 1;){
-      char pc = _file->read();
-      if((int)pc == -1){
-        posEnd = _file->position();
-        if(irow != row) return false;
-        if(icol < col){
-          _file->insert(posEnd, (uint8_t)',', col - icol);
-          icol = col;
-        }
-        if(icol == col){
-          if((posEnd - posStart) > (strlen(item) + 2)){
-            _file->del(posEnd, (posEnd - posStart) - (strlen(item) + 2), true);
-            _file->seek(posStart);
+    while(total){
+      int remain = total > (ACHE_BUFFER_LEN - 1) ? (ACHE_BUFFER_LEN - 1) : total;
+      total -= remain;
+      if(_file->read(_ache, remain) == remain){
+        char *pc = _ache;
+        
+        while(remain){
+          remain -= 1;
+          posEnd += 1;
+          if(*pc == ','){ 
+              if((irow == row) && (icol == col)){
+                posEnd -= 1;
+                //
+                if(strlen(item) ==  (posEnd - posStart)){
+                  _file->seek(posStart);
+                  _file->write((const uint8_t *)item, strlen(item));
+                  
+                }else if(strlen(item) < (posEnd - posStart)){
+                  _file->del(posEnd,((posEnd - posStart) - strlen(item)),true);
+                  _file->seek(posStart);
+                  _file->write((const uint8_t *)item, strlen(item));
+                }else{
+                  _file->insert(posEnd, (uint8_t)' ', (strlen(item) - (posEnd - posStart)));
+                  _file->seek(posStart);
+                  _file->write((const uint8_t *)item, strlen(item));
+                }
+                return true;
+              }
+              icol += 1;
+              posStart = posEnd;
+              posEnd = posStart;
           }
-          println(item);
-          return true;
-        } 
-        break;
-      }
-      if(pc == ','){
-          if((irow == row) && (icol == col)){
-            posEnd = _file->position() - 1;
-            if((posEnd - posStart) > strlen(item)){
-                _file->del(posEnd, (posEnd - posStart) - strlen(item), true);
+          if(*pc == '\r') flag = true;
+          if(flag && (*pc == '\n')){
+            if(irow == row){
+              posEnd -= 2;
+              if(icol < col){
+                _file->insert(posEnd, (uint8_t)',', (col - icol) + strlen(item));
+                posStart = posEnd + col - icol;
                 _file->seek(posStart);
-            }else if((posEnd - posStart) < strlen(item)){
-              _file->insert(posEnd, (uint8_t)' ', strlen(item) - (posEnd - posStart));
+                _file->write((const uint8_t *)item, strlen(item));
+                _columnNum += 1;
+                return true;
+              }else if(icol == col){
+                if(strlen(item) ==  (posEnd - posStart)){
+                  _file->seek(posStart);
+                  _file->write((const uint8_t *)item, strlen(item));
+                }else if(strlen(item) < (posEnd - posStart)){
+                  _file->del(posEnd,((posEnd - posStart) - strlen(item)),true);
+                  _file->seek(posStart);
+                  _file->write((const uint8_t *)item, strlen(item));
+                }else{
+                  _file->insert(posEnd, (uint8_t)' ', (strlen(item) - (posEnd - posStart)));
+                  _file->seek(posStart);
+                  _file->write((const uint8_t *)item, strlen(item));
+                }
+                return true;
+              }
+              return false;
             }
-            print(item);
-            return true;
+            icol = 1;
+            irow += 1;
+            posStart = posEnd;
+            posEnd = posStart;
           }
-          icol += 1;
-          posStart = _file->position();
-      }
-        if(pc == '\r') flag = true;
-        if((flag = true) && (pc == '\n')) {
-          if((irow == row) && (icol == col)){
-            posEnd = _file->position() - 2;
-            if((posEnd - posStart) > strlen(item)){
-                _file->del(posEnd, (posEnd - posStart) - strlen(item), true);
-                _file->seek(posStart);
-            }else if((posEnd - posStart) < strlen(item)){
-              _file->insert(posEnd, (uint8_t)' ', strlen(item) - (posEnd - posStart));
-            }
-            print(item);
-            return true;
-          }
-          icol = 1;
-          irow += 1;
+          if(flag && *pc != '\r') flag = false;
+          pc++;
+          yield();
         }
-        if((flag = true) && (pc != '\r')) flag = false;
-        posStart = _file->position();
       }
+       yield();
     }
+    if(irow == row){
+      if(icol < col){
+        _file->insert(posEnd, (uint8_t)',', (col - icol) + strlen(item));
+        posStart = posEnd + col - icol;
+        _file->seek(posStart);
+        _file->write((const uint8_t *)item, strlen(item));
+        _columnNum = col;
+        return true;
+      }else if(icol == col){
+        if(strlen(item) ==  (posEnd - posStart)){
+          _file->seek(posStart);
+          _file->write((const uint8_t *)item, strlen(item));
+        }else if(strlen(item) < (posEnd - posStart)){
+          _file->del(posEnd,((posEnd - posStart) - strlen(item)),true);
+          _file->seek(posStart);
+          _file->write((const uint8_t *)item, strlen(item));
+        }else{
+          _file->insert(posEnd, (uint8_t)' ', (strlen(item) - (posEnd - posStart)));
+          _file->seek(posStart);
+          _file->write((const uint8_t *)item, strlen(item));
+        }
+        return true;
+      }
+      return false;
+    }
+
+  }
   return false;
 }
 
@@ -698,45 +825,60 @@ bool DFRobot_CsvFile::deleteItem(int row, int col){
     CSV_DBG("col out of range.");
     return false;
   }
-  String str = "";
-  uint32_t total = _file->size();
-  uint16_t remain;
-  int icol = 1;
-  bool flag = false;
   uint32_t posStart = 0, posEnd = 0;
+  bool flag = false;
+  int icol = 1, irow = 1;
+  uint32_t total = _file->size();
   _file->seek(0);
   posStart = _file->position();
   posEnd = posStart;
-  for(int irow = 1; irow < row + 1;){
-    char pc = _file->read();
-    if((int)pc == -1){
-      if(irow != row) return false;
-      if(icol == col){
-        posEnd = _file->position();
-        if(posEnd - posStart) _file->del(posEnd, posEnd - posStart, true);
-      } 
+  while(total){
+    int remain = total > (ACHE_BUFFER_LEN - 1) ? (ACHE_BUFFER_LEN - 1) : total;
+    total -= remain;
+    if(_file->read(_ache, remain) == remain){
+      char *pc = _ache;
+        
+      while(remain){
+        remain -= 1;
+        posEnd += 1;
+        if(*pc == ','){
+          if((irow == row) && (icol == col)){
+            posEnd -= 1;
+            if(posEnd - posStart > 0) _file->del(posEnd,posEnd - posStart,true);
+            
+            return true;
+          }
+          icol += 1;
+          posStart = posEnd;
+          posEnd = posStart;
+        }
+        if(*pc == '\r') flag = true;
+        if(flag && (*pc == '\n')){
+          if(irow == row){
+            posEnd -= 2;
+            if((icol == col) && (posEnd - posStart > 0)){
+              _file->del(posEnd,posEnd - posStart,true);
+            }
+            return true;
+          }
+            icol = 1;
+            irow += 1;
+            posStart = posEnd;
+            posEnd = posStart;
+        }
+        if(flag && *pc != '\r') flag = false;
+        pc++;
+        yield();
+      }
+    }
+    yield();
+  }
+   
+  if(irow == row){
+      if((icol == col) && (posEnd - posStart > 0)){
+       _file->del(posEnd,posEnd - posStart,true);
+      }
       return true;
-    }
-    if(pc == ','){
-      if((irow == row) && (icol == col)){
-        posEnd = _file->position() - 1;
-        if(posEnd - posStart) _file->del(posEnd, posEnd - posStart, true);
-        return true;
-      }
-      icol += 1;
-      posStart = _file->position();
-    }
-    if(pc == '\r') flag = true;
-    if((flag = true) && (pc == '\n')) {
-      if((irow == row) && (icol == col)){
-        posEnd = _file->position() - 2;
-        if(posEnd - posStart) _file->del(posEnd, posEnd - posStart, true);
-        return true;
-      }
-      icol = 1;
-      irow += 1;
-    }
-    if((flag = true) && (pc != '\r')) flag = false;
   }
   return false;
 }
@@ -780,10 +922,10 @@ DFRobot_CsvFile::operator bool() {
   return true;
 }
 
-
 size_t DFRobot_CsvFile::printNumber(unsigned long, uint8_t){
   return 0;
 }
+
 size_t DFRobot_CsvFile::printFloat(double, uint8_t){
   return 0;
 }
@@ -808,13 +950,16 @@ size_t DFRobot_CsvFile::print(long n, int base)
 
     *--str = c < 10 ? c + '0' : c + 'A' - 10;
   } while(n);
+
   return t + write(str);
 }
+
 size_t DFRobot_CsvFile::println(long n, int base){
   size_t t = print(n, base);
   t += Print::println();
   return t;
 }
+
 size_t DFRobot_CsvFile::print(double number, int digits){
   size_t n = 0;
   if (isnan(number)) return Print::print("nan");
@@ -849,6 +994,7 @@ size_t DFRobot_CsvFile::print(double number, int digits){
   Print::print(str);
   return n;
 }
+
 size_t DFRobot_CsvFile::println(double num, int digits){
   size_t n = print(num, digits);
   n += Print::println();

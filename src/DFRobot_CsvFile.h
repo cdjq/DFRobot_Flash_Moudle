@@ -226,7 +226,6 @@ private:
   bool _initialize;
   int _rowNum;     //< 该文件的行
   int _columnNum;  //< 文件列
-  
 };
 
 #endif
