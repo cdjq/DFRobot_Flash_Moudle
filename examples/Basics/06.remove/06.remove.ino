@@ -37,7 +37,7 @@ void setup() {
   //02.返回目录的第1个文件，并依次删除
   Serial.println("============remove============");
   root.rewindDirectory();
-  globalPath = "/"
+  globalPath = "/";
   removeDirectory(root);
   
   //02.打印目录

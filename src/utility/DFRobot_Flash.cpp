@@ -1193,12 +1193,12 @@ bool DFRobot_FlashFile::makeDir(DFRobot_FlashFile* dir, const char* dirName){
 
 void DFRobot_FlashFile::rewind(void){
   if(!isOpen()) {
-    Serial.println("is not open");
+    FLASH_DBG("is not open");
     return;
   }
   
   if(!rewindCommand(_id)){
-    Serial.println("rewind dir is failed.");
+    FLASH_DBG("rewind dir is failed.");
     FLASH_DBG("rewind dir is failed.");
   }
 

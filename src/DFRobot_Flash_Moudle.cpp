@@ -39,9 +39,8 @@ void DFRobot_File::rewindDirectory(void) {
   if (isDirectory()){
      _file->rewind();
   }else{
-    Serial.println("is not dir");
+     DBG("is not dir");
   }
-  Serial.print("dir=");Serial.println(isDirectory());
 }
 
 DFRobot_FlashMoudle::DFRobot_FlashMoudle(){

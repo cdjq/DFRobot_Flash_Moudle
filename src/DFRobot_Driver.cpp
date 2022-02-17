@@ -87,8 +87,6 @@ uint8_t DFRobot_FlashMoudle_IIC::recvData(void* pData, size_t size){
             //uint32_t t = millis();
             pBuf[i] = _pWire->read();
             DBG(pBuf[i],HEX);
-            //Serial.println(pBuf[i],HEX);
-            //Serial.println(millis() - t);
         }
         remain -= size;
         pBuf += size;
@@ -105,19 +103,13 @@ void DFRobot_FlashMoudle_IIC::writeReg(uint8_t reg, void* pData, size_t size){
     uint8_t *pBuf = (uint8_t *)pData;
     size_t remain =  size;
     flush();
-    //for(int i = 0; i < size; i++){
-     //   Serial.print(pBuf[i], HEX);
-     //   Serial.print(", ");
-    //}
-    //Serial.println();
     while(remain){
         size = (remain > (IIC_MAX_TRANSFER - 2)) ? (IIC_MAX_TRANSFER - 2) : remain;
         _pWire->beginTransmission(_addr);
         _pWire->write(reg);
-        _pWire->write(0x00); //写
+        _pWire->write((uint8_t)0x00); //写
         _pWire->write(pBuf, size);
         _pWire->endTransmission();
-        //Serial.print("size=");Serial.println(size);
         reg += size;
         remain -= size;
         pBuf += size;
@@ -144,7 +136,6 @@ uint8_t DFRobot_FlashMoudle_IIC::readReg(uint8_t reg, void* pData, size_t size){
             //uint32_t t = millis();
             pBuf[i] = _pWire->read();
             DBG(pBuf[i],HEX);
-            //Serial.println(millis() - t);
             yield();
         }
         readlen += size;

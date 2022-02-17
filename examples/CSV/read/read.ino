@@ -64,7 +64,7 @@ void setup() {
   Serial.print("First row data: ");
   Serial.println(rowdata);
   String coldata = csv.readColumn(/*col = */1);//读取第一列数据
-  Serial.print("First column data: ");
+  Serial.println("First column data: ");
   Serial.println(coldata);
   String itemData = csv.readItem(/*row = */1, /*col = */1);//读取第一列数据
   Serial.print("1 row and 1 column data: ");

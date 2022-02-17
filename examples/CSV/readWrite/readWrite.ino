@@ -62,7 +62,7 @@ void setup() {
     Serial.println("done.");
   } else {
     // if the file didn't open, print an error:
-    Serial.println("error opening abc.csv");
+    Serial.println("error opening TEST.csv");
   }
 
   myFile = flash.open("TEST.CSV");
@@ -77,7 +77,7 @@ void setup() {
     myFile.close();
   } else {
     // if the file didn't open, print an error:
-    Serial.println("error opening abc.csv");
+    Serial.println("error opening TEST.csv");
   }
 }
 
