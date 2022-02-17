@@ -25,7 +25,7 @@
 #include <Wire.h>
 
 ///< Define DBG, change 0 to 1 open the DBG, 1 to 0 to close.  
-#if 1
+#if 0
 #define DRV_DBG(...) {Serial.print("["); Serial.print(__FUNCTION__); Serial.print("(): "); Serial.print(__LINE__); Serial.print(" ] "); Serial.println(__VA_ARGS__);}
 #else
 #define DRV_DBG(...)

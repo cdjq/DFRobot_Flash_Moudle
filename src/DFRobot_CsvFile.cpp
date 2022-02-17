@@ -28,11 +28,11 @@ uint8_t DFRobot_CsvFile::begin(DFRobot_File *file){
     return 1;
   }
   if(!(*_file)){
-    CSV_DBG("file: ", _file->name(), "is not open.");
+    CSV_DBG("file: is not open.");
     return 2;
   }
   if(_file->isDirectory()){
-    CSV_DBG("file: ", _file->name(), "is not csv type, it is a directory.");
+    CSV_DBG("file: is not csv type, it is a directory.");
     return 3;
   }
   _columnNum = 0;
@@ -92,7 +92,7 @@ uint8_t DFRobot_CsvFile::begin(DFRobot_File *file){
     _columnNum = _columnNum > colIndex ? _columnNum : colIndex;
     _rowNum += 1;
   }
-  CSV_DBG("file: ", _file->name(), "is not csv format type.");
+  CSV_DBG("file: is not csv format type.");
   if(!_file->seek(pos)){
     CSV_DBG("rewind file init position failed.");
     return 6;
@@ -150,7 +150,7 @@ String DFRobot_CsvFile::readRow(int row){
   }
   return rslt;
 }
-
+/*
 bool DFRobot_CsvFile::writeRow(int row, const char *rowData){
   if(row < (int)eSmallestRow|| row > (int)eLargestRow) return false;
 
@@ -299,7 +299,7 @@ bool DFRobot_CsvFile::deleteRow(int row){
   }
   return false;
 }
-
+*/
 String DFRobot_CsvFile::readColumn(int col){
   if(col < (int)eSmallestColumn || col > _columnNum) return "";
   String str = "";
@@ -348,6 +348,7 @@ String DFRobot_CsvFile::readColumn(int col){
   return str;
 }
 
+/*
 bool DFRobot_CsvFile::writeColumn(int col, const char *colData){
   //按顺序写列
   if(col < (int)eSmallestColumn || col > (int)eLargestColumn || (strlen(colData) == 0)) return false;
@@ -609,7 +610,7 @@ bool DFRobot_CsvFile::deleteColumn(int col){
   _columnNum -= 1;
   return true;
 }
-
+*/
 String DFRobot_CsvFile::readItem(int row, int col){
   if((row < (int)eSmallestRow) || (row > _rowNum)){
     CSV_DBG("row out of range.");
@@ -667,7 +668,7 @@ String DFRobot_CsvFile::readItem(int row, int col){
   return str;
   
 }
-
+/*
 bool DFRobot_CsvFile::writeItem(int row, int col, const char *item){
   if(row < (int)eSmallestRow || row > (int)eLargestRow){
     CSV_DBG("row out of range(1,1000).");
@@ -882,7 +883,7 @@ bool DFRobot_CsvFile::deleteItem(int row, int col){
   }
   return false;
 }
-
+*/
 
 size_t DFRobot_CsvFile::write(uint8_t val)
 {

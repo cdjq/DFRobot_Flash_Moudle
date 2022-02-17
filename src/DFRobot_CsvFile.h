@@ -110,8 +110,8 @@ public:
    * @n     true: 写入成功
    * @n     false: 写入失败
    */
-  bool writeRow(int row, const char *rowData);
-  bool writeRow(int row, const String &rowData){ return writeRow(row, rowData.c_str());}
+  //bool writeRow(int row, const char *rowData);
+  //bool writeRow(int row, const String &rowData){ return writeRow(row, rowData.c_str());}
   /**
    * @fn deleteRow
    * @brief 删除此行的内容
@@ -120,7 +120,7 @@ public:
    * @n     true: 删除成功
    * @n     false: 删除失败
    */
-  bool deleteRow(int row);
+  //bool deleteRow(int row);
   /**
    * @fn readColumn
    * @brief 读取某一列的内容
@@ -140,8 +140,8 @@ public:
    * @n     true: 写入成功
    * @n     false: 写入失败
    */
-  bool writeColumn(int col, const char *colData);
-  bool writeColumn(int col, const String &colData){ return writeColumn(col, colData.c_str());}
+  //bool writeColumn(int col, const char *colData);
+  //bool writeColumn(int col, const String &colData){ return writeColumn(col, colData.c_str());}
   
   /**
    * @fn deleteColumn
@@ -151,7 +151,7 @@ public:
    * @n     true: 删除成功
    * @n     false: 删除失败
    */
-  bool deleteColumn(int col);
+  //bool deleteColumn(int col);
   /**
    * @fn readItem
    * @brief 读某行某列的内容
@@ -171,8 +171,8 @@ public:
    * @n     true: 写入成功
    * @n     false: 写入失败
    */
-  bool writeItem(int row, int col, const char *item);
-  bool writeItem(int row, int col, const String &item){ return writeItem(row, col, item.c_str());}
+  //bool writeItem(int row, int col, const char *item);
+  //bool writeItem(int row, int col, const String &item){ return writeItem(row, col, item.c_str());}
   /**
    * @fn deleteItem
    * @brief 删除某一单元格的内容
@@ -182,7 +182,7 @@ public:
    * @n     true: 删除成功
    * @n     false: 删除失败
    */
-  bool deleteItem(int row, int col);
+  //bool deleteItem(int row, int col);
   /**
    * @fn write
    * @brief 父类print重载，一个就是一项，顺序存储
@@ -195,8 +195,8 @@ public:
   virtual size_t write(const uint8_t *buffer, size_t size);
   size_t write(const char *buffer, size_t size) {return write((const uint8_t *)buffer, size);}
   /**
-   * @fn print or println
-   * @brief 父类print重载，print写一个单元格的数据，println写某行最后一项的数据，并发送行结束标志 '\r\n'，并开启新行
+   * @fn print
+   * @brief 父类print重载，print写一个单元格的数据,写一项数据
    */
   size_t print(const String &s){return Print::print(s);}
   size_t print(const char str[]){return Print::print(str);}
@@ -207,7 +207,10 @@ public:
   size_t print(long n, int base = DEC);//{Print::print(n,base);}
   size_t print(unsigned long n, int base= DEC){return Print::print(n, base);}
   size_t print(double, int = 2);
-
+  /**
+   * @fn println
+   * @brief 父类println重载，println写一项单元格的数据，并结束当前行，开启下一行
+   */
   size_t println(const String &s){return Print::println(s);}
   size_t println(const char str[]){return Print::println(str);}
   size_t println(char c){return Print::println(c);}

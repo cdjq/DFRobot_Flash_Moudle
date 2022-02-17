@@ -41,7 +41,7 @@
 #endif
 
 #define FILE_READ  0x01
-#define FILE_WRITE (0x01 | 0x02 | 0x10)
+#define FILE_WRITE (0x01 | 0x02 | 0x10) //read write ALWAYS  apend:0x30
 
 class DFRobot_File : public Stream{
 private:
@@ -155,9 +155,9 @@ public:
    * @n     true: 成功
    * @n     false: 失败
    */
-  boolean del(uint32_t pos, uint32_t num, bool flag = true);
-  boolean insert(uint32_t pos, uint8_t c, uint32_t num);
-  boolean insert(uint32_t pos, void *buf, uint32_t len);
+  //boolean del(uint32_t pos, uint32_t num, bool flag = true);
+  //boolean insert(uint32_t pos, uint8_t c, uint32_t num);
+  //boolean insert(uint32_t pos, void *buf, uint32_t len);
 
   operator bool();
   /**

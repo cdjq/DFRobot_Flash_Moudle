@@ -180,7 +180,7 @@ static bool waitForTimeout(uint8_t reg, uint8_t *len, uint32_t timems){
       delay(50);
       yield();
     }
-    return true;
+    return false;
 }
 
 static bool changeDirCommand(bool absolute, const char* fileName){
@@ -534,8 +534,7 @@ static bool openDirCommand(char *name, int8_t pId, int8_t *id){
   }
   String str = String(name);
   str.toUpperCase();
-  name = (char *)str.c_str();
-  uint8_t *buf = (uint8_t *)malloc(((LEN_OPEN_DIR + strlen(name) + 1) > LEN_RESP_OPEN_DIR ? (LEN_OPEN_FILE + strlen(name) + 1) : LEN_RESP_OPEN_DIR));//定义了一个buf
+  uint8_t *buf = (uint8_t *)malloc(((LEN_OPEN_DIR + str.length() + 1) > LEN_RESP_OPEN_DIR ? (LEN_OPEN_FILE + str.length() + 1) : LEN_RESP_OPEN_DIR));//定义了一个buf
     if(buf == NULL){
       FLASH_DBG("pCmd malloc failed. ");
       return false;
@@ -545,14 +544,15 @@ static bool openDirCommand(char *name, int8_t pId, int8_t *id){
     pResponsePkt_t rpkt = (pResponsePkt_t)buf;
     
     pCmd->cmd = CMD_OPEN_DIR;
-    pCmd->len = LEN_OPEN_DIR + strlen(name) + 1 - LEN_FIX_CMD;
+    pCmd->len = LEN_OPEN_DIR + str.length() + 1 - LEN_FIX_CMD;
     pCmd->buf[0] = (uint8_t) pId;
-    memcpy(pCmd->buf+1, name, strlen(name)+1);
+    memcpy(pCmd->buf+1, str.c_str(), str.length());
+    pCmd->buf[1+str.length()] = 0;
 
 
-    _drvIf->writeReg(CONFIG_CMD_REG, pCmd, LEN_OPEN_DIR + strlen(name) + 1);//发送命令后，读取命令
+    _drvIf->writeReg(CONFIG_CMD_REG, pCmd, LEN_OPEN_DIR + str.length() + 1);//发送命令后，读取命令
 
-    rpkt->exeReg = LEN_OPEN_DIR + strlen(name) + 1;
+    rpkt->exeReg = LEN_OPEN_DIR + str.length() + 1;
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
@@ -777,10 +777,10 @@ static uint16_t writeFileCommand(int8_t id, void *data, uint16_t len){
       yield();
       
     }
-    if(!syncFileCommand(id)){
-      free(buf);
-      return t - count;
-    }
+    //if(!syncFileCommand(id)){
+    //  free(buf);
+    //  return t - count;
+    //}
     free(buf);
     return t;
 }
@@ -994,9 +994,9 @@ DFRobot_Flash::DFRobot_Flash()
   : _capacity(0),_freeSpace(0),_fatType(0),_fileNums(0){}
 
 DFRobot_Flash::~DFRobot_Flash(){
-    _capacity = 0;
-    _fatType = 0;
-    _fileNums = 0;
+    //_capacity = 0;
+    //_fatType = 0;
+    //_fileNums = 0;
 }
 
 uint8_t DFRobot_Flash::init(DFRobot_Driver *drv){
@@ -1016,6 +1016,7 @@ uint8_t DFRobot_Flash::init(DFRobot_Driver *drv){
       FLASH_DBG("get flash info cmd pakage failed! Error: (3 << 4)");
       return (3 << 4);
     }
+    FLASH_DBG("1+++++++++++++++++++++++++++");
     return 0;
 }
 
@@ -1048,6 +1049,7 @@ DFRobot_FlashFile::~DFRobot_FlashFile(){
 
 
 uint8_t DFRobot_FlashFile::openRoot(DFRobot_Flash *flash){
+    FLASH_DBG("2+++++++++++++++++++++++++++");
     if(isOpen()){
         FLASH_DBG("root is already open, error: 1");
         return 1;
@@ -1218,7 +1220,7 @@ bool DFRobot_FlashFile::changeDir(bool absolute, const char* fileName){
 String DFRobot_FlashFile::getWorkspacePath(){
     return getPWDCommand();
 }
-
+/*
 boolean DFRobot_FlashFile::del(uint32_t pos, uint32_t num, bool flag){
   if(!isFile() || !isOpen() || (pos > _size)) return false;
   if(flag){
@@ -1254,6 +1256,6 @@ boolean DFRobot_FlashFile::insert(uint32_t pos, void *buf, uint32_t len){
   _size += len;
   return true;                                                                                                                     
 }
-  
+*/
 
 

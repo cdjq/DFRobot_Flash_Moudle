@@ -117,6 +117,7 @@ DFRobot_File::operator bool() {
   return false;
 }
 
+/*
 boolean DFRobot_File::del(uint32_t pos, uint32_t num, bool flag){
   //
   if (_file) 
@@ -136,3 +137,4 @@ boolean DFRobot_File::insert(uint32_t pos, void *buf, uint32_t len){
     return  _file->insert(pos, buf, len);
   return false;
 }
+*/
