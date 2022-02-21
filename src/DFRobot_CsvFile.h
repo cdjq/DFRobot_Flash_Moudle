@@ -5,7 +5,7 @@
  * @n 1. csv文件支持1000x26大小，即最大1000行，最多26列;
  * @n 2. 删除某行,某列（整行，整列删除）;
  * @n 3. 写或覆盖某行某列,或某单元内容（整行，整列写或覆盖）;
- * @n 4. 删除某单元内容（不会删除该单元哥，只是内容为空）
+ * @n 4. 删除某单元内容（不会删除该单元哥，只是内容为空）;
  * @n 
  * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)

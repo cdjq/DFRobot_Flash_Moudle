@@ -203,6 +203,7 @@ static bool changeDirCommand(bool absolute, const char* fileName){
   _drvIf->writeReg(CONFIG_CMD_REG, pCmd, (LEN_CD_PWD + strlen(fileName) + 1));//发送命令后，读取命令
   rpkt->exeReg = (LEN_CD_PWD + strlen(fileName) + 1);
   if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+    if(rpkt->len != 0) return false;
      FLASH_DBG("sucess.");
      free(buf);
      return true;
@@ -258,6 +259,7 @@ static bool rewindRootDir(){
   _drvIf->writeReg(CONFIG_CMD_REG, pCmd, LEN_RE_ROOT_DIR);//发送命令后，读取命令
   rpkt->exeReg = LEN_RE_ROOT_DIR;
   if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+    if(rpkt->len != 0) return false;
      FLASH_DBG("sucess.");
      free(buf);
      return true;
@@ -292,6 +294,7 @@ static bool removeCommand(int8_t pid, char *name){
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 0) return false;
        free(buf);
        return true;
     }
@@ -322,6 +325,7 @@ static bool syncFileCommand(int8_t id){
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 0) return false;
        FLASH_DBG("sucess.");
        free(buf);
        return true;
@@ -393,6 +397,7 @@ static bool resetCommand(){ //发送命令
 
     rpkt->exeReg = LEN_RESET;
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+       if(rpkt->len != 0) return false;
        FLASH_DBG("sucess.");
        free(buf);
        return true;
@@ -424,6 +429,7 @@ static bool flashInfoCommand(uint8_t *fatType, uint32_t *cap, uint32_t *freeS, u
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+       if(rpkt->len != 11) return false;
        FLASH_DBG("sucess.");
        _drvIf->recvData(rpkt->buf, rpkt->len);
        
@@ -472,6 +478,7 @@ static bool openFileCommand(char *name, int8_t pId, uint8_t oflag, int8_t *id, u
     rpkt->exeReg = LEN_OPEN_FILE + strlen(name) + 1;
     
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 9) return false;
        FLASH_DBG("sucess.");
        _drvIf->recvData(rpkt->buf, rpkt->len);
        *id = buf[2]; 
@@ -515,6 +522,7 @@ static uint8_t fileInfoCommand(char *name , int8_t pId){//如果父级目录的i
   rpkt->rwFlag = FLAG_READ;
 
   if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+    if(rpkt->len != 1) return false;
        uint8_t type = 0;
        free(buf);
        _drvIf->recvData(&type, 1);
@@ -534,7 +542,7 @@ static bool openDirCommand(char *name, int8_t pId, int8_t *id){
   }
   String str = String(name);
   str.toUpperCase();
-  uint8_t *buf = (uint8_t *)malloc(((LEN_OPEN_DIR + str.length() + 1) > LEN_RESP_OPEN_DIR ? (LEN_OPEN_FILE + str.length() + 1) : LEN_RESP_OPEN_DIR));//定义了一个buf
+  uint8_t *buf = (uint8_t *)malloc(((LEN_OPEN_DIR + str.length() + 1) > LEN_RESP_OPEN_DIR ? (LEN_OPEN_DIR + str.length() + 1) : LEN_RESP_OPEN_DIR));//定义了一个buf
     if(buf == NULL){
       FLASH_DBG("pCmd malloc failed. ");
       return false;
@@ -556,6 +564,7 @@ static bool openDirCommand(char *name, int8_t pId, int8_t *id){
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 1) return false;
        FLASH_DBG("sucess.");
        free(buf);
        _drvIf->recvData(id, 1);
@@ -590,6 +599,7 @@ static bool rewindCommand(int8_t id){
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 0) return false;
        FLASH_DBG("sucess.");
        free(buf);
        return true;
@@ -623,6 +633,7 @@ static bool closeDirCommand(int8_t id){
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 0) return false;
        FLASH_DBG("sucess.");
        free(buf);
        return true;
@@ -657,6 +668,7 @@ static bool closeCommand(int8_t id){
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 0) return false;
        FLASH_DBG("sucess.");
        free(buf);
        return true;
@@ -708,6 +720,7 @@ static uint16_t insertCommand(int8_t id, uint32_t pos, void *data, uint32_t len)
 
 
       if(!waitForTimeout(rpkt->exeReg, &rpkt->len, 2000)){
+        if(rpkt->len != 0) return false;
         FLASH_DBG(rpkt->len)
         free(buf);
         return t;
@@ -729,11 +742,12 @@ static uint16_t writeFileCommand(int8_t id, void *data, uint16_t len){
       FLASH_DBG("_drvIf is null.");
       return 0;
     }
-    uint8_t *buf = (uint8_t *)malloc(LEN_WRITE_FILE > LEN_RESP_WRITE_FILE ? LEN_CLOSE_FILE : LEN_RESP_WRITE_FILE);//定义了一个buf
+    uint8_t *buf = (uint8_t *)malloc(LEN_WRITE_FILE > LEN_RESP_WRITE_FILE ? LEN_WRITE_FILE : LEN_RESP_WRITE_FILE);//定义了一个buf
     if(buf == NULL){
       FLASH_DBG("pCmd malloc failed. ");
       return false;
     }
+    FLASH_DBG((uint32_t)((uint32_t *)buf), HEX);
     pCmdPkt_t pCmd = (pCmdPkt_t)buf;
     pResponsePkt_t rpkt = (pResponsePkt_t)buf;
     uint8_t *pBuf = (uint8_t *)data;
@@ -741,17 +755,9 @@ static uint16_t writeFileCommand(int8_t id, void *data, uint16_t len){
     uint16_t remain = len;
     uint16_t t = 0;
     uint8_t flag = 1;
-    uint16_t count = 0;
     while(remain){
       len = (remain > 250) ? 250 : remain;
-      if(count + len > 1024 ){
-        count = 0;
-        if(!syncFileCommand(id)){
-          free(buf);
-          return t;
-        }
-
-      }
+      
       pCmd->cmd = CMD_WRITE_FILE;
       pCmd->len =LEN_WRITE_FILE - LEN_FIX_CMD + len;
       memcpy(pCmd->buf, &id, 1);
@@ -772,8 +778,7 @@ static uint16_t writeFileCommand(int8_t id, void *data, uint16_t len){
       }
       t += len;
       remain -= len;
-      pBuf += len;
-      count += len;
+      if(remain != 0) pBuf += len;
       yield();
       
     }
@@ -781,7 +786,10 @@ static uint16_t writeFileCommand(int8_t id, void *data, uint16_t len){
     //  free(buf);
     //  return t - count;
     //}
+    FLASH_DBG((uint32_t)((uint32_t *)buf), HEX);
+    //if(buf != NULL) free(buf);
     free(buf);
+    FLASH_DBG();
     return t;
 }
 
@@ -790,7 +798,7 @@ static uint16_t readFileCommand(int8_t id, void *data, uint16_t len){
     FLASH_DBG("_drvIf is null.");
     return 0;
   }
-  uint8_t *buf = (uint8_t *)malloc(LEN_READ_FILE > LEN_RESP_READ_FILE ? LEN_CLOSE_FILE : LEN_RESP_READ_FILE);//定义了一个buf
+  uint8_t *buf = (uint8_t *)malloc(LEN_READ_FILE > LEN_RESP_READ_FILE ? LEN_READ_FILE : LEN_RESP_READ_FILE);//定义了一个buf
   if(buf == NULL){
     FLASH_DBG("pCmd malloc failed. ");
     return 0;
@@ -865,6 +873,7 @@ static bool insertOneCommand(int8_t id, uint32_t pos, uint8_t val, uint32_t num)
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 0) return false;
        FLASH_DBG("sucess.");
        free(buf);
        return true;
@@ -905,6 +914,7 @@ static bool delCommand(int8_t id, uint32_t pos, uint32_t num, bool flag){
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 0) return false;
        FLASH_DBG("sucess.");
        free(buf);
        return true;
@@ -942,6 +952,7 @@ static bool seekFileCommand(int8_t id, uint32_t pos){
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 0) return false;
        FLASH_DBG("sucess.");
        free(buf);
        return true;
@@ -979,6 +990,7 @@ static bool mkdirCommand(int8_t pid, char *name){
     rpkt->rwFlag = FLAG_READ;
 
     if(waitForTimeout(rpkt->exeReg, &rpkt->len, 1000)){
+      if(rpkt->len != 0) return false;
        FLASH_DBG("sucess.");
        free(buf);
        return true;
