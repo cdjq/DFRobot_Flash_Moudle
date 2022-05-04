@@ -31,6 +31,7 @@
 
 #include "utility/DFRobot_Flash.h"
 #include "utility/DFRobot_Driver.h"
+#include "utility/DFRobot_FatCmd.h"
 
 
 ///< Define DBG, change 0 to 1 open the DBG, 1 to 0 to close.  
@@ -67,6 +68,19 @@ public:
    * @return The Strorage type and file or directory name.
    */
   char * name();
+  /**
+   * @fn getAbsolutePath
+   * @brief Get absolute path of file or directory.
+   * @return The absolute path of file or directory.
+   */
+  String getAbsolutePath();
+
+  /**
+   * @fn getParentDirectory
+   * @brief Get parent directory of file or directory.
+   * @return The parent directory path of file or directory.
+   */
+  String getParentDirectory();
   /**
    * @fn write
    * @brief Write one byte into file. 
@@ -181,7 +195,8 @@ private:
   DFRobot_Flash _card;
   DFRobot_FlashFile _root;
   friend class DFRobot_File;
-  DFRobot_FlashFile getParentDir(const char *filepath, int *indx);
+  //DFRobot_FlashFile getParentDir(const char *filepath, int *indx);
+  void getParentDir(const char *filepath, int *index);
 public:
  /**
   * @fn DFRobot_FlashMoudle
@@ -285,40 +300,33 @@ public:
    * @retval 2 设备未找到
    */
   uint8_t begin(uint32_t freq = 1000);
+
   /**
    * @fn sendData
    * @brief  发送数据到I2C总线
    * @param pData 指向要发送的数据的指针
    * @param size 要发送的数据
-   * @return None
+   * @param endflag 是否发送停止位
+   * @n     true 发送停止位
+   * @n     false 不发送停止位
+   * @return 发送状态
+   * @retval true  发送成功
+   * @retval true  发送失败
    */
-  virtual void sendData(void* pData, size_t size);
+  bool sendData(void* pData, uint16_t size, bool endflag = true);
   /**
    * @fn recvData
    * @brief  从I2C总线上接收数据
    * @param pData 存储从IIC总线上接收的数据
    * @param size 需要接收的数据
-   * @return 返回实际接收的数据的长度
+   * @param endflag 是否发送停止位
+   * @n     true 发送停止位
+   * @n     false 不发送停止位
+   * @return 接收状态
+   * @retval true  接收成功
+   * @retval true  接收失败
    */
-  virtual uint8_t recvData(void* pData, size_t size);
-  /**
-   * @fn writeReg
-   * @brief  写寄存器
-   * @param reg 寄存器地址
-   * @param pData 指向要发送的数据的指针
-   * @param size 要发送的数据
-   * @return None
-   */
-  virtual void writeReg(uint8_t reg, void* pData, size_t size);
-  /**
-   * @fn readReg
-   * @brief  从I2C总线上接收数据
-   * @param reg 寄存器地址
-   * @param pData 存储从IIC总线上接收的数据
-   * @param size 需要接收的数据
-   * @return 返回实际接收的数据的长度
-   */
-  virtual uint8_t readReg(uint8_t reg, void* pData, size_t size);
+  bool recvData(void* pData, uint16_t size, bool endflag = true);
   /**
    * @fn flush
    * @brief  清空I2C接收缓冲区的数据

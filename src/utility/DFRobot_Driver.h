@@ -34,13 +34,38 @@
 
 class DFRobot_Driver{
 public:
-  virtual void sendData(void* pData, size_t size) = 0;
-  virtual uint8_t recvData(void* pData, size_t size) = 0;
-  virtual void writeReg(uint8_t reg, void* pData, size_t size) = 0;
-  virtual uint8_t readReg(uint8_t reg, void* pData, size_t size) = 0;
+  /**
+   * @fn sendData
+   * @brief  发送数据到I2C总线
+   * @param pData 指向要发送的数据的指针
+   * @param size 要发送的数据
+   * @param endflag 是否发送停止位
+   * @n     true 发送停止位
+   * @n     false 不发送停止位
+   * @return 发送状态
+   * @retval true  发送成功
+   * @retval true  发送失败
+   */
+  virtual bool sendData(void* pData, uint16_t size, bool endflag) = 0;
+  /**
+   * @fn recvData
+   * @brief  从I2C总线上接收数据
+   * @param pData 存储从IIC总线上接收的数据
+   * @param size 需要接收的数据
+   * @param endflag 是否发送停止位
+   * @n     true 发送停止位
+   * @n     false 不发送停止位
+   * @return 接收状态
+   * @retval true  接收成功
+   * @retval true  接收失败
+   */
+  virtual bool recvData(void* pData, uint16_t size, bool endflag) = 0;
+  /**
+   * @fn flush
+   * @brief  清空I2C接收缓冲区的数据
+   * @return None
+   */
   virtual void flush() = 0;
-protected:
-  
 };
 
 

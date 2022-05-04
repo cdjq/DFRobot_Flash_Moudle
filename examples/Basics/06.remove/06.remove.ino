@@ -3,7 +3,7 @@
 DFRobot_FlashMoudle_IIC iic(/*addr=*/0x55);
 DFRobot_FlashMoudle flash;
 DFRobot_File root;
-String globalPath = ""; 
+
 void setup() {
   // Open serial communications and wait for port to open:
   Serial.begin(115200);
@@ -37,7 +37,6 @@ void setup() {
   //02.返回目录的第1个文件，并依次删除
   Serial.println("============remove============");
   root.rewindDirectory();
-  globalPath = "/";
   removeDirectory(root);
   
   //02.打印目录
@@ -59,8 +58,10 @@ void removeDirectory(DFRobot_File dir) {
     DFRobot_File entry =  dir.openNextFile();
     if (!entry) {
       Serial.print("remove [" + String(dir.name()) +"] floder...");
+      String abpath = dir.getAbsolutePath();
       dir.close();
-      if(flash.rmdir(dir.name())){
+      
+      if(flash.rmdir(abpath)){
           Serial.println("done.");
       }else{
           Serial.println("failed.");
@@ -73,8 +74,9 @@ void removeDirectory(DFRobot_File dir) {
     } else {
       // files have sizes, directories do not
       Serial.print("remove [" + String(entry.name()) +"] file...");
+      String abpath = entry.getAbsolutePath();
       entry.close();
-      if(flash.remove(entry.name())){
+      if(flash.remove(abpath)){
           Serial.println("done.");
       }else{
           Serial.println("failed.");

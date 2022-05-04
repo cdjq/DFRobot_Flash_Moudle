@@ -49,6 +49,7 @@ public:
   uint32_t size();
   uint8_t fatType();
   bool reset();
+  DFRobot_DFR0870_Protocol _pro;
 
 private:
   friend class DFRobot_FlashFile; //Allow DFRobot_FlashFile access to DFRobot_Flash private data.
@@ -61,43 +62,194 @@ private:
 
 
 class DFRobot_FlashFile{
-
-
 public:
+ /**
+  * @fn DFRobot_FlashFile
+  * @brief 空构造函数.
+  */
   DFRobot_FlashFile();
+ /**
+  * @fn DFRobot_FlashFile
+  * @brief 析构函数.
+  */
   ~DFRobot_FlashFile();
+  /**
+   * @fn openRoot
+   * @brief 打开根目录，根目录只能被打开一次
+   * @param flash DFRobot_Flash类对象引用
+   * @return 返回打开结果
+   * @retval 0 打开成功
+   * @retval others 打开失败
+   */
   uint8_t openRoot(DFRobot_Flash &flash){ return openRoot(&flash);}
   uint8_t openRoot(DFRobot_Flash *flash);
+  /**
+   * @fn open
+   * @brief 打开文件或目录
+   * @param dirFile DFRobot_Flash类对象，父级目录
+   * @param fileName 文件名
+   * @param oflag 打开权限
+   * @return 返回打开结果
+   * @retval true  打开成功
+   * @retval false 打开失败
+   */
   bool open(DFRobot_FlashFile& dirFile, const char* fileName, uint8_t oflag) {return open(&dirFile, fileName, oflag);}
   bool open(DFRobot_FlashFile* dirFile, const char* fileName, uint8_t oflag);
+  /**
+   * @fn isOpen
+   * @brief 判断文件或目录是否打开
+   * @return 返回判断结果
+   * @retval true  文件或目录打开
+   * @retval false 文件或目录未打开
+   */
   bool isOpen(void);
+  /**
+   * @fn close
+   * @brief 关闭文件或目录，注意，根目录一经打开，则不会再关闭
+   * @return 返回关闭结果
+   * @retval true  文件或目录关闭成功
+   * @retval false 文件或目录关闭失败
+   */
   bool close();
+  /**
+   * @fn write
+   * @brief 向文件中写数据
+   * @param buf   指向要写入数据的缓存指针
+   * @param nbyte 写入数据的大小，单位字节
+   * @return 返回实际写入数据的大小
+   */
   size_t write(const void* buf, uint16_t nbyte);
+  /**
+   * @fn read
+   * @brief 向文件中读取一个数据
+   * @return 读取的数据
+   */
   int16_t read(void);
+  /**
+   * @fn read
+   * @brief 从文件中读取数据
+   * @param buf   指向数据的缓存指针
+   * @param nbyte 读取数据的大小，单位字节
+   * @return 返回实际读取数据的大小
+   */
   int16_t read(void* buf, uint16_t nbyte);
+  /**
+   * @fn sync
+   * @brief 同步文件内容
+   * @return 同步结果
+   * @retval 1 同步成功
+   * @retval 0 同步失败
+   */
   uint8_t sync(void);
-  int8_t readDir(char *name);
+  /**
+   * @fn readDir
+   * @brief 读取当前目录的内容
+   * @param name  保存读取的目录内的子目录或子文件
+   * @param size  name缓存区的大小
+   * @return 读取结果
+   * @retval -1 读取失败
+   * @retval  0 读取成功
+   */
+  int8_t readDir(char *name,uint16_t size);
+  /**
+   * @fn curPosition
+   * @brief 获取指针当前位置
+   * @return 指针当前位置
+   */
   uint32_t curPosition(void);
+  /**
+   * @fn fileSize
+   * @brief 获取文件总大小，单位字节
+   * @return 文件总大小
+   */
   uint32_t fileSize(void);
+  /**
+   * @fn seekSet
+   * @brief 设置文件读写指针位置
+   * @param pos 文件读写指针位置
+   * @return 设置结果
+   * @retval 0  设置失败
+   * @retval 1  设置成功
+   */
   uint8_t seekSet(uint32_t pos);
+  /**
+   * @fn isFile
+   * @brief 判断是否为文件
+   * @return 判断结果
+   * @retval true  文件
+   * @retval false 不是文件
+   */
   bool isFile(void);
+  /**
+   * @fn isDir
+   * @brief 判断是否为目录
+   * @return 判断结果
+   * @retval true  目录
+   * @retval false 不是目录
+   */
   bool isDir(void);
+  /**
+   * @fn isRoot
+   * @brief 判断是否为根目录
+   * @return 判断结果
+   * @retval true  根目录
+   * @retval false 不是根目录
+   */
   bool isRoot(void);
+  /**
+   * @fn seekCur
+   * @brief 设置文件读写指针位置
+   * @param pos 文件读写指针位置
+   * @return 设置结果
+   * @retval 0  设置失败
+   * @retval 1  设置成功
+   */
   uint8_t seekCur(uint32_t pos);
-  bool makeDir(DFRobot_FlashFile& dir, const char* dirName);
-  bool makeDir(DFRobot_FlashFile* dir, const char* dirName);
+  /**
+   * @fn makeDir
+   * @brief 创建目录
+   * @param dirName 目录名相对路径
+   * @return 创建结果
+   * @retval false  创建失败
+   * @retval true   创建成功
+   */
+  bool makeDir(const char* dirName);
+  /**
+   * @fn rewind
+   * @brief 返回读目录首项
+   */
   void rewind(void);
-  bool reRootDir(void);
-  uint8_t remove(DFRobot_FlashFile& dirFile, const char* fileName);
-  uint8_t remove(DFRobot_FlashFile* dirFile, const char* fileName);
-  bool changeDir(bool absolute, const char* fileName);
-  boolean del(uint32_t pos, uint32_t num, bool flag);
-  boolean insert(uint32_t pos, uint8_t c, uint32_t num);
-  boolean insert(uint32_t pos, void *buf, uint32_t len);
-  String getWorkspacePath();
-protected:
-  
-  
+  /**
+   * @fn remove
+   * @brief 移除目录
+   * @param fileName 目录或文件名
+   * @return 移除结果
+   * @retval 0  创建失败
+   * @retval 1   创建成功
+   */
+  uint8_t remove(const char* fileName);
+  /**
+   * @fn exists
+   * @brief 判断文件或目录是否存在
+   * @param fileName 目录或文件名
+   * @return 存在结果
+   * @retval false  不存在
+   * @retval true   存在
+   */
+  bool exists(const char* fileName);
+  /**
+   * @fn absolutePath
+   * @brief 获取此文件或目录的绝对路径
+   * @return 此文件或目录的绝对路径
+   */
+  String absolutePath();
+  /**
+   * @fn parentDirectory
+   * @brief 获取此文件或目录的父级目录路径
+   * @return 此文件或目录的父级目录路径
+   */
+  String parentDirectory();
+
 private:
   DFRobot_Flash *_flash;
   int8_t _id;

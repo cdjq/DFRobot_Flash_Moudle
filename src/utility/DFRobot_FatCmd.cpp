@@ -15,384 +15,879 @@
  */
 #include <Arduino.h>
 #include "DFRobot_FatCmd.h"
+#include "Wire.h"
 
-//#define CONFIG_CMD_REG      0x00  ///<配置命令寄存器
-//#define STATUS_REG_FIX      0x02  ///<状态寄存器, 每条命令都有一个状态寄存器，它的实际位置 = STATUS_REG_FIX + 命令数据的长度
-//#define CMD_LEN_MAX         254
-//
-//#define CMD_FLASH_INFO      0x01  ///< 读取Flash信息命令
-//#define CMD_READ_ADDR       0x02  ///< 读取IIC地址命令
-//#define CMD_MODIFY_ADDR     0x03  ///< 修改IIC地址命令
-//#define CMD_OPEN_FILE       0x05  ///< 打开文件命令
-//#define CMD_RESET           0x06  ///< 复位I2C从机命令, 只有应答命令无响应包，成功返回0x53，失败返回0x63
-//#define CMD_CLOSE_FILE      0x07  ///< 关闭文件命令
-//#define CMD_WRITE_FILE      0x08  ///< 写文件命令
-//#define CMD_SYNC_FILE       0x09  ///< 将缓存数据写入实际文件中的命令
-//#define CMD_SEEK_FILE       0x0A  ///< 设置文件读写指针位置命令
-//#define CMD_READ_FILE       0x0B  ///< 读文件命令
-//
-//
-//#define CMD_GET_PWD         0x02  ///< 获取当前工作目录命令
-//#define CMD_RE_ROOT_DIR     0x03  ///< 返回根目录命令
-//#define CMD_CD_PWD          0x04  ///< 切换工作目录命令
-//#define CMD_LS              0x05  ///< 列出某目录下所有文件或文件夹命令
-//#define CMD_MKDIR           0x06  ///< 创建文件夹命令
-//#define CMD_REMOVE          0x07  ///< 移除文件夹命令
-//#define CMD_CREATE          0x08  ///< 创建文件命令
-//#define CMD_RM_FILE         0x09  ///< 移除文件命令
-//
-//
-//
-//#define CMD_INVAILD         0x0E  ///< 无效命令
-//
-//
-//#define LEN_FLASH_INFO      0x00  ///< 读取Flash信息命令
-//#define LEN_READ_ADDR       0x00  ///< 读取IIC地址命令的固定长度
-//#define LEN_MODIFY_ADDR     0x01  ///< 修改IIC地址命令的固定长度
-//#define LEN_OPEN_FILE       0x00  ///< 打开文件命令的固定长度
-//#define LEN_RESET           0x00  ///< 复位I2C从机命令的固定长度
-//#define LEN_CLOSE_FILE      0x00  ///< 关闭文件命令固定长度
-//#define LEN_WRITE_FILE      0x00  ///< 写文件命令的固定长度
-//#define LEN_SYNC_FILE       0x00  ///< 将缓存数据写入实际文件中命令的固定长度
-//#define LEN_SEEK_FILE       0x00  ///< 设置文件读写指针位置命令的固定长度
-//#define LEN_READ_FILE       0x00  ///< 读文件命令的固定长度
-//
-//#define LEN_GET_PWD         0x00  ///< 获取当前工作目录命令的固定长度
-//#define LEN_RE_ROOT_DIR     0x00  ///< 返回根目录命令固定长度
-//#define LEN_CD_PWD          0x00  ///< 切换工作目录命令固定长度
-//#define LEN_LS              0x00  ///< 列出某目录下所有文件或文件夹命令的固定长度
-//#define LEN_MKDIR           0x00  ///< 创建文件夹命令的固定长度
-//#define LEN_REMOVE          0x00  ///< 移除文件夹命令的固定长度
-//#define LEN_CREATE          0x00  ///< 创建文件命令固定长度
-//#define LEN_RM_FILE         0x00  ///< 移除文件命令固定长度
-//
-//
-//
-//
-//
-//#define LEN_RESP_FLASH_INFO  (1 + 4 + 4 + 2 )     ///< 读取Flash信息命令的响应包 分别为FAT类型（1字节）， flash容量（4字节）， 空闲字节数(4字节) 能存储的最大文件数（2字节）crc(1字节)
-//#define LEN_RESP_OPEN_FILE   (1 + 4 + 4)         ///< 打开命令的响应包 分别为ID（1字节）， 当前位置（4字节）， 文件总大小（4字节） crc(1字节)
-////#define LEN_RESP_OPEN_FILE   (0)         ///< 复位命令的响应包 分别为ID（1字节）， 当前位置（4字节）， 文件总大小（4字节） crc(1字节)
-//
-//
-//typedef struct{
-//  uint8_t reg; /**< 固定包头0xAA */
-//  uint8_t cmd;    /**< 命令，范围0x00~0x0E,0x0F及之后为无效命令 */
-//  uint8_t len;    /**< 除去具体命令后的数据长度，这个一般用来计算buf数组的长度 */
-//  uint8_t buf[CMD_LEN_MAX]; /**< 0长度数组，它的大小取决于上一个变量len的值 */
-//}__attribute__ ((packed)) sCmdPkt_t, *pCmdPkt_t;
-//
-///**
-// * @fn CmdPacket
-// * @brief 模块命令打包
-// * @param cmd   指向uint8_t类型数组的指针，存储了命令包的包头(0x55 0xAA)、具体命令、命令长度
-// * @param data  指向uint8_t类型数组的指针，这个内容主要用来为sCmdPkt_t结构体类型中的buf成员变量赋值
-// * @param state 指向布尔类型变量的指针， 获取打包状态，true表示打包成功， false表示打包失败
-// * @param len   指向uint16_t类型变量的指针， 获取命令包的总长度，单位字节
-// * @return uint8_t *类型数组，表示命令包的起始地址， NULL表示打包失败
-// */
-//static uint16_t cmdPacket(uint8_t *pkt, uint8_t cmd, uint8_t cmdLen, void *data, uint16_t len){
-//  pCmdPkt_t pCmd = (pCmdPkt_t)pkt;
-//  uint16_t reLen = 3;
-//  pCmd->reg = CONFIG_CMD_REG;
-//  pCmd->cmd = cmd;
-//  pCmd->len = cmdLen;
-//  if((data != NULL) && (len > 0)){
-//    len = (len > CMD_LEN_MAX) ? CMD_LEN_MAX : len;
-//    memcpy(pCmd->buf, data, len);
-//    reLen += len;
-//    pCmd->len += len;
-//  }
-//  return reLen;
-//}
-//
-//uint16_t DFRobot_FatCmd::getResetCmdConfig(uint8_t *pkt, uint16_t pktSize){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_RESET, LEN_RESET, NULL, 0);
-//}
-//
-//uint16_t DFRobot_FatCmd::getFlashInfoCmdConfig(uint8_t *pkt, uint16_t pktSize){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_FLASH_INFO, LEN_FLASH_INFO, NULL, 0);
-//}
-//
-///**
-// * @fn getReadAddrCmdPkt
-// * @brief 获取读地址命令包结构
-// * @param state 指向布尔类型变量的指针， 获取打包状态，true表示打包成功， false表示打包失败
-// * @param len   指向uint16_t类型变量的指针， 获取命令包的总长度，单位字节
-// * @return uint8_t *类型数组首地址指针，表示命令包的起始地址， NULL表示打包失败
-// * @attention 这里返回的数组是用malloc动态分配的，用完之后一定要用free函数释放改内存
-// */
-//
-//uint16_t DFRobot_FatCmd::getReadAddrCmdConfig(uint8_t *pkt, uint16_t pktSize){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_READ_ADDR, LEN_READ_ADDR, NULL, 0);
-//}
-//
-///**
-// * @fn getModifyAddrCmdPkt
-// * @brief 获取修改地址命令包结构
-// * @param state 指向布尔类型变量的指针， 获取打包状态，true表示打包成功， false表示打包失败
-// * @param newAddr 新的7位IIC地址，范围1~127
-// * @param len   指向uint16_t类型变量的指针， 获取命令包的总长度，单位字节
-// * @return uint8_t *类型数组首地址指针，表示命令包的起始地址， NULL表示打包失败
-// * @attention 这里返回的数组是用malloc动态分配的，用完之后一定要用free函数释放改内存
-// */
-//
-//uint16_t DFRobot_FatCmd::getModifyAddrCmdConfig(uint8_t *pkt, uint16_t pktSize, uint8_t newAddr){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_MODIFY_ADDR, LEN_MODIFY_ADDR, &newAddr, 1);
-//}
-//
-///**
-// * @fn getPWDCmdPkt
-// * @brief 获取当前工作目录命令包结构
-// * @param state 指向布尔类型变量的指针， 获取打包状态，true表示打包成功， false表示打包失败
-// * @param len   指向uint16_t类型变量的指针， 获取命令包的总长度，单位字节
-// * @return uint8_t *类型数组首地址指针，表示命令包的起始地址， NULL表示打包失败
-// * @attention 这里返回的数组是用malloc动态分配的，用完之后一定要用free函数释放改内存
-// */
-///*uint8_t *DFRobot_FatCmd::getPWDCmdPkt(bool *state, uint16_t *len){
-//  if((state == NULL) && (len == NULL)) {
-//    CMD_DBG("state or len is NULL");
-//    return NULL;
-//  }
-//  uint8_t cmd[] = {0x55, 0xAA, CMD_GET_PWD, LEN_GET_PWD};
-//  uint8_t *pkt = CmdPacket(cmd, NULL, state, len);
-//  return pkt;
-//}
-//*/
-///**
-// * @fn getReRootDirCmdPkt
-// * @brief 获取返回根目录命令包结构
-// * @param state 指向布尔类型变量的指针， 获取打包状态，true表示打包成功， false表示打包失败
-// * @param len   指向uint16_t类型变量的指针， 获取命令包的总长度，单位字节
-// * @return uint8_t *类型数组首地址指针，表示命令包的起始地址， NULL表示打包失败
-// * @attention 这里返回的数组是用malloc动态分配的，用完之后一定要用free函数释放改内存
-// */
-///*uint8_t *DFRobot_FatCmd::getReRootDirCmdPkt(bool *state, uint16_t *len){
-//  if((state == NULL) && (len == NULL)) {
-//    CMD_DBG("state or len is NULL");
-//    return NULL;
-//  }
-//  uint8_t cmd[] = {0x55, 0xAA, CMD_RE_ROOT_DIR, LEN_RE_ROOT_DIR};
-//  uint8_t *pkt = CmdPacket(cmd, NULL, state, len);
-//  return pkt;
-//}
-//*/
-///*
-//uint8_t *DFRobot_FatCmd::getCdPWDCmdPkt(bool *state, uint8_t *data, uint8_t size, uint16_t *len){
-//  if((state == NULL) && (len == NULL)) {
-//    CMD_DBG("state or len is NULL");
-//    return NULL;
-//  }
-//  size += LEN_CD_PWD;
-//  uint8_t cmd[] = {0x55, 0xAA, CMD_CD_PWD, size};
-//  uint8_t *pkt = CmdPacket(cmd, data, state, len);
-//  return pkt;
-//}
-//*/
-///*
-//uint8_t *DFRobot_FatCmd::getLsCmdPkt(bool *state, uint8_t *data, uint8_t size, uint16_t *len){
-//  if((state == NULL) && (len == NULL)) {
-//    CMD_DBG("state or len is NULL");
-//    return NULL;
-//  }
-//  size += LEN_LS;
-//  uint8_t cmd[] = {0x55, 0xAA, CMD_LS, size};
-//  uint8_t *pkt = CmdPacket(cmd, data, state, len);
-//  return pkt;
-//
-//}
-//*/
-//
-//uint16_t DFRobot_FatCmd::getMkdirCmdConfig(uint8_t *pkt, uint16_t pktSize, void *data, uint8_t len){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_MKDIR, LEN_MKDIR, data, len);
-//}
-//
-//
-//uint16_t DFRobot_FatCmd::getRemoveCmdConfig(uint8_t *pkt, uint16_t pktSize, void *data, uint8_t len){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_REMOVE, LEN_REMOVE, data, len);
-//
-//}
-//
-//uint16_t DFRobot_FatCmd::getCreateCmdConfig(uint8_t *pkt, uint16_t pktSize, void *data, uint8_t len){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_CREATE, LEN_CREATE, data, len);
-//}
-//
-//uint16_t DFRobot_FatCmd::getRmFileCmdConfig(uint8_t *pkt, uint16_t pktSize, void *data, uint8_t len){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_RM_FILE, LEN_RM_FILE, data, len);
-//}
-//
-//uint16_t DFRobot_FatCmd::getReadFileCmdConfig(uint8_t *pkt, uint16_t pktSize, void *data, uint8_t len){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_READ_FILE, LEN_READ_FILE, data, len);
-//}
-//
-//
-//uint16_t DFRobot_FatCmd::getWriteFileCmdConfig(uint8_t *pkt, uint16_t pktSize, void *data, uint8_t len){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_WRITE_FILE, LEN_WRITE_FILE, data, len);
-//}
-//
-//uint16_t DFRobot_FatCmd::getOpenFileCmdConfig(uint8_t *pkt, uint16_t pktSize, void *data, uint8_t len){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_OPEN_FILE, LEN_OPEN_FILE, data, len);
-//}
-//
-//uint16_t DFRobot_FatCmd::getCloseFileCmdConfig(uint8_t *pkt, uint16_t pktSize, void *data, uint8_t len){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_CLOSE_FILE, LEN_CLOSE_FILE, data, len);
-//}
-//
-//uint16_t DFRobot_FatCmd::getSyncFileCmdConfig(uint8_t *pkt, uint16_t pktSize, void *data, uint8_t len){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_SYNC_FILE, LEN_SYNC_FILE, data, len);
-//}
-//
-//uint16_t DFRobot_FatCmd::getSeekFileCmdConfig(uint8_t *pkt, uint16_t pktSize, void *data, uint8_t len){
-//  if(pkt == NULL){
-//    CMD_DBG("pkt is NULL");
-//    return 0;
-//  }
-//  if(pktSize < (LEN_RESET + STATUS_REG_FIX + 1)){
-//    CMD_DBG("pktSize is not enough.");
-//    return 0;
-//  }
-//  return cmdPacket(pkt, CMD_SEEK_FILE, LEN_SEEK_FILE, data, len);
-//}
-//
-//bool DFRobot_FatCmd::parseResPktOfFlashInfoCmd(uint8_t *data, uint16_t len, uint8_t *fatType, uint32_t *cap, uint32_t *freeS, uint16_t *fns){
-//  if((!data) || (len != LEN_RESP_FLASH_INFO)) return false;
-//  if(fatType) *fatType = data[0];
-//  if(cap) *cap = (uint32_t)((data[1] << 24) | (data[2] << 16) | (data[3] << 8) | data[4]);
-//  if(freeS) *freeS = (uint32_t)((data[5] << 24) | (data[6]) << 16 | (data[7] << 8) | data[8]);
-//  if(fns) *fns = (uint32_t)((data[9] << 8) | data[10]);
-//  return true;
-//}
-//
-//bool DFRobot_FatCmd::parseResPktOfOpenFileCmd(uint8_t *data, uint16_t len, int8_t *id, uint32_t *curPos, uint32_t *size){
-//  if((!data) || (len != LEN_RESP_OPEN_FILE)) return false;
-//  if(id) *id = (int8_t)data[0];
-//  if(curPos) *curPos = (uint32_t)((data[1] << 24) | (data[2]) << 16 | (data[3] << 8) | data[4]);
-//  if(size) *size = (uint32_t)((data[5] << 24) | (data[6]) << 16 | (data[7] << 8) | data[8]);
-//  return true;
-//}
+///< Define DBG, change 0 to 1 open the DBG, 1 to 0 to close.  
+#ifndef CMD_DBG
+#if 0
+#define CMD_DBG(...) {Serial.print("["); Serial.print(__FUNCTION__); Serial.print("(): "); Serial.print(__LINE__); Serial.print(" ] "); Serial.println(__VA_ARGS__);}
+#else
+#define CMD_DBG(...)
+#endif
+#endif
 
-/*
-uint8_t *DFRobot_FatCmd::mallocResPktOfOpenFileCmd(bool *state, uint16_t *len){
-  return mallocResponsePkt(LEN_RESP_OPEN_FILE, state, len);
+#define REG_I2C_ADDR        0x0001
+#define REG_FAT_TYPE        0x0001
+#define REG_DISK_CAPACITY_L 0x0002
+
+#define SEND_PKT_PRE_FIX_LEN   3
+#define CMD_START           0x01
+#define CMD_RESET           0x01  ///< 复位I2C从机命令, 只有应答命令无响应包，成功返回0x53，失败返回0x63
+#define CMD_FLASH_INFO      0x02  ///< 读取Flash信息命令
+#define CMD_READ_ADDR       0x03  ///< 读取IIC地址命令
+#define CMD_SET_ADDR        0x04  ///< 设置I2C地址命令（此命令模块掉电后生效）
+#define CMD_OPEN_FILE       0x05  ///< 打开文件命令
+#define CMD_CLOSE_FILE      0x06  ///< 关闭文件命令
+#define CMD_WRITE_FILE      0x07  ///< 写文件命令
+#define CMD_READ_FILE       0x08  ///< 读文件命令
+#define CMD_SYNC_FILE       0x09  ///< 同步文件，将缓存数据写入实际文件中的命令
+#define CMD_SEEK_FILE       0x0A  ///< 设置文件读写指针位置命令
+#define CMD_MKDIR           0x0B  ///< 创建文件夹命令
+#define CMD_OPEN_DIR        0x0C  ///< 打开目录命令
+#define CMD_CLOSE_DIR       0x0D  ///< 关闭目录命令
+#define CMD_REMOVE          0x0E  ///< 移除文件或目录
+#define CMD_FILE_ATTR       0x0F  ///< 获取文件属性，是目录，还是文件，如果是文件，返回TYPE_FAT_FILE_NORMAL，TYPE_FAT_FILE_SUBDIR，不存在
+#define CMD_READ_DIR        0x10  ///< 读取目录下的所有文件和目录
+#define CMD_REWIND          0x11  ///< 回到读目录起始位置
+#define CMD_ABSPATH         0x12  ///< 获取当前目录或文件的绝对路径
+#define CMD_PARENTDIR       0x13  ///< 获取当前目录或文件的父级目录路径  
+#define CMD_END             CMD_PARENTDIR
+
+#define STATUS_SUCCESS      0x53  ///< 响应成功状态   
+#define STATUS_FAILED       0x63  ///< 响应成功状态  
+
+#define IIC_MAX_TRANSFER    32     ///< I2C最大传输数据
+
+#define DEBUG_TIMEOUT_MS    20000
+
+static DFRobot_Driver *_drv = NULL;
+
+typedef struct{
+  uint8_t cmd;           /**< 命令，范围0x00~0x0E,0x0F及之后为无效命令 */
+  union{
+    struct{
+      uint8_t bit0:1;
+      uint8_t bit1:1;
+      uint8_t rsv: 6;
+    };
+    uint8_t fix;           /**< 固定判定，bit0为1表示sendLen为固定数据， bit1为1表示responseLen为固定数据*/
+  };
+  uint16_t sendLen;      /**< 此命令发送包有效数据的长度，如果为0xFFFF则代表不是固定反应  */
+  uint16_t responseLen;  /**< 此命令响应包有效数据的长度，如果为0xFFFF则代表不是固定反应  */
+}__attribute__ ((packed)) sCmdStruct_t, *pCmdStruct_t;
+
+typedef struct{
+  uint8_t cmd;    /**< 命令，范围0x00~0x0E,0x0F及之后为无效命令 */
+  uint8_t lenL;    /**< 除去具体命令后的数据长度，这个一般用来计算buf数组的长度 */
+  uint8_t lenH;
+  uint8_t buf[0]; /**< 0长度数组，它的大小取决于上一个变量len的值 */
+}__attribute__ ((packed)) sSendCmdPkt_t, *pSendCmdPkt_t;
+
+typedef struct{
+  uint8_t state;    /**< 响应包状态，0x53，响应成功，0x63，响应失败 */
+  uint8_t cmd;      /**< 命令的响应包 */
+  uint8_t lenL;     /**< 除去具体命令后的数据长度低位，这个一般用来计算buf数组的长度 */
+  uint8_t lenH;     /**< 除去具体命令后的数据长度高位，这个一般用来计算buf数组的长度 */
+  uint8_t buf[0];   /**< 0长度数组，它的大小取决于上一个变量len的值 */
+}__attribute__ ((packed)) sResponseCmdPkt_t, *pResponseCmdPkt_t;
+//const uint8_t SIMKAIFont12ptBitmaps[] PROGMEM
+static const uint8_t  DFR0870_CMD_STRUCT[] PROGMEM = {
+  CMD_RESET,      0x03, 0, 0 ,
+  CMD_FLASH_INFO, 0x03, 0, 11,
+  CMD_READ_ADDR,  0x03, 0, 1 ,
+  CMD_SET_ADDR,   0x03, 1, 0 ,
+  CMD_OPEN_FILE,  0x02, 2, 9 ,
+  CMD_CLOSE_FILE, 0x03, 1, 0 ,
+  CMD_WRITE_FILE, 0x02, 1, 2 ,
+  CMD_READ_FILE,  0x01, 3, 0 ,
+  CMD_SYNC_FILE,  0x03, 1, 0 ,
+  CMD_SEEK_FILE,  0x03, 5, 4 ,
+  CMD_MKDIR,      0x00, 1, 0 ,
+  CMD_OPEN_DIR,   0x00, 1, 1 ,
+  CMD_CLOSE_DIR,  0x01, 1, 0 ,
+  CMD_REMOVE,     0x02, 1, 0 ,
+  CMD_FILE_ATTR,  0x02, 1, 1 ,
+  CMD_READ_DIR,   0x01, 1, 0 ,
+  CMD_REWIND,     0x03, 1, 0 ,
+  CMD_ABSPATH,    0x01, 2, 0 ,
+  CMD_PARENTDIR,  0x01, 2, 0 ,
+};
+
+static sCmdStruct_t getCmdStructConfig(uint8_t cmd){
+  sCmdStruct_t cmdStu;
+  if(cmd < CMD_START || cmd > CMD_END){
+    memset(&cmdStu, 0, sizeof(sCmdStruct_t));
+    return cmdStu;
+  }
+  uint8_t *addr = (uint8_t *)(DFR0870_CMD_STRUCT + 4 * (cmd - 1));
+  cmdStu.cmd         = pgm_read_byte(addr++);
+  cmdStu.fix         = pgm_read_byte(addr++);
+  cmdStu.sendLen     = (uint16_t)pgm_read_byte(addr++);
+  cmdStu.responseLen = (uint16_t)pgm_read_byte(addr);
+  //Serial.print(cmdStu.cmd,HEX);
+  //Serial.print("=");
+  //Serial.println(cmd,HEX);
+  //Serial.print("fix=");Serial.println(cmdStu.fix,HEX);
+  //Serial.print("sendLen=");Serial.println(cmdStu.sendLen);
+  //Serial.print("responseLen=");Serial.println(cmdStu.responseLen);
+  return cmdStu;
 }
 
-uint8_t *DFRobot_FatCmd::mallocResPktOfFlashInfo(bool *state, uint16_t *len){
-  return mallocResponsePkt(LEN_RESP_FLASH_INFO, state, len);
+void * DFRobot_DFR0870_Protocol::recvCmdResponsePkt(uint8_t cmd){
+  if(cmd < CMD_START || cmd > CMD_END){
+    CMD_DBG("cmd is error!");
+    return NULL;
+  }
+  sResponseCmdPkt_t responsePkt;
+  pResponseCmdPkt_t responsePktPtr = NULL;
+  uint16_t length = 0;
+  uint32_t t = millis();
+  while(millis() - t < DEBUG_TIMEOUT_MS/*time_ms*/){
+    readResponseData(&responsePkt.state, 1);
+RECVYIMEOUTFLAG:
+    delay(50);
+    yield();
+    if((responsePkt.state == STATUS_SUCCESS) || (responsePkt.state == STATUS_FAILED)) {
+      readResponseData(&responsePkt.cmd, 1);
+      if(responsePkt.cmd == cmd){
+        readResponseData(&responsePkt.lenL, 2);
+        length = (responsePkt.lenH << 8) | responsePkt.lenL;
+        CMD_DBG(responsePkt.lenH,HEX);
+        CMD_DBG(responsePkt.lenL,HEX);
+        CMD_DBG(length,HEX);
+        responsePktPtr = (pResponseCmdPkt_t)malloc(sizeof(sResponseCmdPkt_t) + length);
+        if(responsePktPtr == NULL){
+          CMD_DBG("responsePktPtr malloc failed!");
+          CMD_DBG(cmd, HEX);
+          CMD_DBG(length);
+          return NULL;
+        }
+        memcpy(responsePktPtr, &responsePkt, sizeof(sResponseCmdPkt_t));
+        if(length) readResponseData(responsePktPtr->buf, length);
+        CMD_DBG(millis() - t);
+        return responsePktPtr;
+      }else{
+        responsePkt.state = responsePkt.cmd;
+        goto RECVYIMEOUTFLAG;
+      }
+    }
+    
+  }
+  CMD_DBG("Time out!");
+  return NULL;
+}
+void * DFRobot_DFR0870_Protocol::packedCmdPacket(uint8_t cmd, uint16_t len){
+  if(cmd < CMD_START || cmd > CMD_END){
+    CMD_DBG("cmd is error!");
+    return NULL;
+  }
+  sCmdStruct_t cmdStu = getCmdStructConfig(cmd);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)malloc(sizeof(sSendCmdPkt_t) + cmdStu.sendLen + len);
+  if(sendPkt){
+    len += cmdStu.sendLen;
+    sendPkt->cmd = cmd;
+    sendPkt->lenL = len & 0xFF;
+    sendPkt->lenH = (len >> 8) & 0xFF;
+  }
+  return sendPkt;
 }
 
-bool DFRobot_FatCmd::parseResPktOfOpenFileCmd(uint8_t *data, uint16_t len, uint8_t *id, uint32_t *curPos, uint32_t *size){
-  if((!data) || (len != LEN_RESP_OPEN_FILE)) return false;
-  bool ret = checkCSSum(data, len - 1, data[len-1]);
-  if(!ret) return false;
-  if(id) *id = data[0];
-  if(curPos) *curPos = (data[1] << 24) | (data[2]) << 16 | (data[3] << 8) | data[4];
-  if(size) *size = (data[5] << 24) | (data[6]) << 16 | (data[7] << 8) | data[8];
+bool DFRobot_DFR0870_Protocol::writeCmdPacket(void *pData, uint16_t size, bool endflag){
+  CMD_DBG((uint32_t)((uint32_t *)_drv), HEX);
+  if(_drv) {
+    CMD_DBG();
+    bool ret = _drv->sendData(pData, size, endflag);
+    CMD_DBG((uint32_t)((uint32_t *)_drv), HEX);
+    return ret;
+
+  }
+  CMD_DBG();
+  return false;
+}
+
+bool DFRobot_DFR0870_Protocol::readResponseData(void *pData, uint16_t size, bool endflag){
+  if(_drv) return _drv->recvData(pData, size, endflag);
+  return false;
+}
+
+bool DFRobot_DFR0870_Protocol::begin(DFRobot_Driver *drv){
+  _drv = drv;
+  if(_drv == NULL) return false;
+  return true;
+}
+
+bool DFRobot_DFR0870_Protocol::reset(){
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_RESET);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("reset: packed malloc failed.");
+    return false;
+  }
+  if(writeCmdPacket(sendPkt, SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL)) == false){
+    CMD_DBG("reset: send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_RESET);
+  if(responsePkt == NULL){
+    CMD_DBG("reset: response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_RESET) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen)){
+    CMD_DBG("reset: response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  //Serial.print("state=");Serial.println(responsePkt->state,HEX);
+  //Serial.print("cmd=");Serial.println(responsePkt->cmd,HEX);
+  //Serial.print("length=");Serial.println((responsePkt->lenH << 8) | responsePkt->lenL, HEX);
+  free(responsePkt);
+  return true;
+}
+
+bool DFRobot_DFR0870_Protocol::getFlashInfo(uint8_t *fatType, uint32_t *capacity, uint32_t *freeSec, uint16_t *maxFileNums){
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_FLASH_INFO);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return false;
+  }
+  if(writeCmdPacket(sendPkt, SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL)) == false){
+    CMD_DBG("FlashInfo: send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_FLASH_INFO);
+  if(responsePkt == NULL){
+    CMD_DBG("FlashInfo: response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_FLASH_INFO) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen)){
+    CMD_DBG("FlashInfo: response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  if(fatType) *fatType = responsePkt->buf[0];
+  if(capacity) *capacity = responsePkt->buf[1] | (responsePkt->buf[2] << 8) | (responsePkt->buf[3] << 16) | (responsePkt->buf[4] << 24);
+  if(freeSec) *freeSec = responsePkt->buf[5] | (responsePkt->buf[6] << 8) | (responsePkt->buf[7] << 16) | (responsePkt->buf[8] << 24);
+  if(maxFileNums) *maxFileNums = responsePkt->buf[9] | (responsePkt->buf[10] << 8);
+  if(fatType) CMD_DBG(*fatType, HEX);
+  if(capacity) CMD_DBG(*capacity, HEX);
+  if(freeSec) CMD_DBG(*freeSec, HEX);
+  if(maxFileNums) CMD_DBG(*maxFileNums, HEX);
+
+  free(responsePkt);
+  return true;
+}
+
+uint8_t DFRobot_DFR0870_Protocol::getI2CAddress(){
+  uint8_t addr = 0;
+   sCmdStruct_t cmdStu = getCmdStructConfig(CMD_READ_ADDR);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return false;
+  }
+  if(writeCmdPacket(sendPkt, SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL)) == false){
+    CMD_DBG("FlashInfo: send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_READ_ADDR);
+  if(responsePkt == NULL){
+    CMD_DBG("FlashInfo: response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_READ_ADDR) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen)){
+    CMD_DBG("FlashInfo: response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  addr = responsePkt->buf[0];
+  CMD_DBG(addr, HEX);
+
+  free(responsePkt);
+  return addr;
+}
+
+bool DFRobot_DFR0870_Protocol::setI2CAddress(uint8_t addr){
+  if(addr < 1 || addr > 0x7F){
+    CMD_DBG("addr range is error.");
+    return false;
+  }
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_SET_ADDR);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+
+  if(sendPkt == NULL){
+    CMD_DBG("packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = addr;
+  if(writeCmdPacket(sendPkt, SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL)) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_SET_ADDR);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_SET_ADDR) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen)){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  
+  free(responsePkt);
+  return true;
+}
+
+bool DFRobot_DFR0870_Protocol::openFile(const char *name, int8_t pid, uint8_t oflag, int8_t *id, uint32_t *curPos, uint32_t *size){
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_OPEN_FILE);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, strlen(name) + 1);
+
+  if(sendPkt == NULL){
+    CMD_DBG("CMD_OPEN_FILE packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = (uint8_t)pid;
+  sendPkt->buf[1] = oflag;
+  memcpy(&sendPkt->buf[2], name, strlen(name));
+  sendPkt->buf[strlen(name)+2] = '\0';
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("CMD_OPEN_FILE send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_OPEN_FILE);
+  if(responsePkt == NULL){
+    CMD_DBG("CMD_OPEN_FILE response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_OPEN_FILE) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen)){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  if(id)     *id     = responsePkt->buf[0];
+  if(curPos) *curPos = (responsePkt->buf[4] << 24) | (responsePkt->buf[3] << 16) | (responsePkt->buf[2] << 8) | responsePkt->buf[1];
+  if(size)   *size   = (responsePkt->buf[8] << 24) | (responsePkt->buf[7] << 16) | (responsePkt->buf[6] << 8) | responsePkt->buf[5];
+  if(id)     CMD_DBG(*id, HEX);
+  if(curPos) CMD_DBG(*curPos, HEX);    
+  if(size)   CMD_DBG(*size, HEX);       
+  return true;
+}
+
+bool DFRobot_DFR0870_Protocol::closeFile(int8_t id){
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_CLOSE_FILE);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+
+  if(sendPkt == NULL){
+    CMD_DBG("CMD_CLOSE_FILE packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = (uint8_t)id;
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("CMD_CLOSE_FILE send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_CLOSE_FILE);
+  if(responsePkt == NULL){
+    CMD_DBG("CMD_CLOSE_FILE response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_CLOSE_FILE) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen)){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }    
+  return true;
+}
+
+uint16_t DFRobot_DFR0870_Protocol::writeFile(int8_t id, void *data, uint16_t len){
+  if(_drv == NULL) return 0;
+  uint8_t *pBuf = (uint8_t *)data;
+  uint16_t remain = len;
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_WRITE_FILE);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+
+  if(sendPkt == NULL){
+    CMD_DBG("CMD_WRITE_FILE packed malloc failed.");
+    return 0;
+  }
+  sendPkt->lenL = (len + 1) & 0xFF;
+  sendPkt->lenH = ((len + 1) >> 8) & 0xFF;
+  sendPkt->buf[0] = (uint8_t)id;
+  
+  bool flag = _drv->sendData(sendPkt, SEND_PKT_PRE_FIX_LEN + 1, false);
+
+  if(!flag) return 0;
+  free(sendPkt);
+  flag = _drv->sendData(data, len, true);
+  if(!flag) return 0;
+  
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_WRITE_FILE);
+  if(responsePkt == NULL){
+    CMD_DBG("CMD_WRITE_FILE response packet fail.");
+    return 0;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_WRITE_FILE) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen)){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return 0;
+  }  
+  uint16_t total = (responsePkt->buf[1] << 8) | responsePkt->buf[0];
+  CMD_DBG(total);
+  free(responsePkt);
+  return total;
+}
+
+uint16_t DFRobot_DFR0870_Protocol::readFile(int8_t id, void *data, uint16_t len){
+  uint16_t total = 0;
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_READ_FILE);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+
+  if(sendPkt == NULL){
+    CMD_DBG("CMD_READ_ADDR packed malloc failed.");
+    return 0;
+  }
+  sendPkt->buf[0] = (uint8_t)id;
+  sendPkt->buf[1] = len & 0xFF;
+  sendPkt->buf[2] = (len >> 8) & 0xFF;
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("CMD_READ_ADDR send packet fail.");
+    free(sendPkt);
+    return 0;
+  }
+  free(sendPkt);
+  sResponseCmdPkt_t responsePkt;
+  uint16_t length = 0;
+  uint16_t recvsize = 0;
+  uint32_t t = millis();
+  while(millis() - t < DEBUG_TIMEOUT_MS/*time_ms*/){
+    delay(50);
+    yield();
+    readResponseData(&responsePkt.state, 1);
+MILLISLOOP:
+    if((responsePkt.state == STATUS_SUCCESS) || (responsePkt.state == STATUS_FAILED)){
+      readResponseData(&responsePkt.cmd, 1);
+      if(responsePkt.cmd == CMD_READ_FILE){
+        readResponseData(&responsePkt.lenL, 2);
+        length = (responsePkt.lenH << 8) | responsePkt.lenL;
+        if(responsePkt.state == STATUS_SUCCESS){
+          total = (len > length) ? length : len;
+          readResponseData(data, total);
+          return total;
+        }else{
+          return 0;
+        }
+      }else{
+        responsePkt.state = responsePkt.cmd;
+        goto MILLISLOOP;
+      }
+    }
+  }
+  return 0;
+}
+
+bool DFRobot_DFR0870_Protocol::sync(int8_t id){
+
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_SYNC_FILE);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = (uint8_t)id;
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_SYNC_FILE);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_SYNC_FILE) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen)){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  free(responsePkt);
+  return true;
+}
+
+bool DFRobot_DFR0870_Protocol::seekFile(int8_t id, uint32_t pos){
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_SEEK_FILE);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("CMD_SEEK_FILE packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = (uint8_t)id;
+  sendPkt->buf[1] = pos & 0xFF;
+  sendPkt->buf[2] = (pos >> 8) & 0xFF;
+  sendPkt->buf[3] = (pos >> 16) & 0xFF;
+  sendPkt->buf[4] = (pos >> 24) & 0xFF;
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("CMD_SEEK_FILE send packet fail.");
+    free(sendPkt);
+    return 0;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_SEEK_FILE);
+  if(responsePkt == NULL){
+    CMD_DBG("CMD_SEEK_FILE response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_SEEK_FILE) || (cmdStu.responseLen != ((responsePkt->lenH << 8) | responsePkt->lenL))){
+    CMD_DBG("CMD_SEEK_FILE response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  uint32_t curpos = (responsePkt->buf[3] << 24) | (responsePkt->buf[2] << 16) | (responsePkt->buf[1] << 8) | responsePkt->buf[0];
+  CMD_DBG(curpos);
+  CMD_DBG(pos);
   return true;
 }
 
 
-*/
+
+bool DFRobot_DFR0870_Protocol::newDirectory(const char *name, int8_t pid){
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_MKDIR);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, strlen(name) + 1);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = (uint8_t)pid;
+  memcpy(&sendPkt->buf[1], name, strlen(name));
+  sendPkt->buf[strlen(name)+1] = '\0';
+  CMD_DBG(SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL));
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+  CMD_DBG();
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_MKDIR);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_MKDIR) || (cmdStu.responseLen != ((responsePkt->lenH << 8) | responsePkt->lenL))){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  free(responsePkt);
+  return true;
+}
+
+bool DFRobot_DFR0870_Protocol::openDirectory(const char *name, int8_t pid, int8_t *id){
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_OPEN_DIR);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, strlen(name) + 1);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = (uint8_t)pid;
+  memcpy(&sendPkt->buf[1], name, strlen(name));
+  sendPkt->buf[strlen(name)+1] = '\0';
+  CMD_DBG(SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL));
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_OPEN_DIR);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_OPEN_DIR) ){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  if(id) *id = responsePkt->buf[0];
+  uint16_t length = (responsePkt->lenH << 8) | responsePkt->lenL;
+  char parent[length];
+  memcpy(parent, &responsePkt->buf[1], length-1);
+  parent[length - 1] = '\0';
+  CMD_DBG(length);
+  CMD_DBG(parent);
+  if(id) CMD_DBG(*id,HEX);
+  free(responsePkt);
+  return true;
+}
+
+bool DFRobot_DFR0870_Protocol::closeDirectory(int8_t id){
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_CLOSE_DIR);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = (uint8_t)id;
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_CLOSE_DIR);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_CLOSE_DIR) ){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  free(responsePkt);
+  return true;
+}
+
+ bool DFRobot_DFR0870_Protocol::remove(int8_t pid, char *name){
+  uint8_t attr = 0;
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_REMOVE);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, strlen(name) + 1);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = (uint8_t)pid;
+  memcpy(&sendPkt->buf[1], name, strlen(name));
+  sendPkt->buf[strlen(name)+1] = '\0';
+  
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_REMOVE);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_REMOVE) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen) ){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  free(responsePkt);
+  return true;
+}
+
+uint8_t DFRobot_DFR0870_Protocol::getFileAttribute(int8_t pid, char *name){
+  uint8_t attr = 0;
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_FILE_ATTR);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, strlen(name) + 1);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return 0;
+  }
+  sendPkt->buf[0] = (uint8_t)pid;
+  memcpy(&sendPkt->buf[1], name, strlen(name));
+  sendPkt->buf[strlen(name)+1] = '\0';
+  
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return 0;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_FILE_ATTR);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return 0;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_FILE_ATTR) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen) ){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return 0;
+  }
+  attr = responsePkt->buf[0];
+  free(responsePkt);
+  CMD_DBG(attr);
+  return attr;
+}
+
+bool DFRobot_DFR0870_Protocol::readDirectory(int8_t id,  char *name, uint16_t namebufsize){
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_READ_DIR);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = (uint8_t)id;
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_READ_DIR);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_READ_DIR) || (((responsePkt->lenH << 8) | responsePkt->lenL) > namebufsize)){
+    CMD_DBG(responsePkt->state,HEX);
+    CMD_DBG(responsePkt->cmd,HEX);
+    CMD_DBG((responsePkt->lenH << 8) | responsePkt->lenL);
+    CMD_DBG(namebufsize);
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+
+  namebufsize = (responsePkt->lenH << 8) | responsePkt->lenL;
+  if(namebufsize == 0) return false;
+  memcpy(name, responsePkt->buf, namebufsize);
+  CMD_DBG(name);
+  free(responsePkt);
+  return true;
+}
+
+bool DFRobot_DFR0870_Protocol::rewind(int8_t id){
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_REWIND);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return false;
+  }
+  sendPkt->buf[0] = (uint8_t)id;
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return false;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_REWIND);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return false;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_REWIND) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen)){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return false;
+  }
+  free(responsePkt);
+  return true;
+}
+
+String DFRobot_DFR0870_Protocol::getAbsolutePath(int8_t id, uint8_t type){
+  String str = "";
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_ABSPATH);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+  
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return str;
+  }
+  sendPkt->buf[0] = (uint8_t)id;
+  sendPkt->buf[1] = type;
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return str;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_ABSPATH);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return str;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_ABSPATH) || (((responsePkt->lenH << 8) | responsePkt->lenL) == 0)){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return str;
+  }
+  uint16_t length = (responsePkt->lenH << 8) | responsePkt->lenL;
+
+  char pname[length + 1];
+  memcpy(pname, responsePkt->buf, length);
+  pname[length] = '\0';
+  free(responsePkt);
+  return String(pname);
+}
+String DFRobot_DFR0870_Protocol::getParentDirectory(int8_t id, uint8_t type){
+  String str = "";
+  sCmdStruct_t cmdStu = getCmdStructConfig(CMD_PARENTDIR);
+  pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
+
+  if(sendPkt == NULL){
+    CMD_DBG("FlashInfo: packed malloc failed.");
+    return str;
+  }
+  sendPkt->buf[0] = (uint8_t)id;
+  sendPkt->buf[1] = type;
+  if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
+    CMD_DBG("send packet fail.");
+    free(sendPkt);
+    return str;
+  }
+  free(sendPkt);
+
+  pResponseCmdPkt_t responsePkt = (pResponseCmdPkt_t)recvCmdResponsePkt(CMD_PARENTDIR);
+  if(responsePkt == NULL){
+    CMD_DBG("response packet fail.");
+    return str;
+  }
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_PARENTDIR) || (((responsePkt->lenH << 8) | responsePkt->lenL) == 0)){
+    CMD_DBG("response recv packet failrd.");
+    free(responsePkt);
+    return str;
+  }
+  uint16_t length = (responsePkt->lenH << 8) | responsePkt->lenL;
+
+  char pname[length + 1];
+  memcpy(pname, responsePkt->buf, length);
+  pname[length] = '\0';
+  free(responsePkt);
+  return String(pname);
+}
+

@@ -49,113 +49,58 @@ uint8_t DFRobot_FlashMoudle_IIC::begin(uint32_t freq){
     return 0;
 }
 
-void DFRobot_FlashMoudle_IIC::sendData(void* pData, size_t size){
+bool DFRobot_FlashMoudle_IIC::sendData(void* pData, uint16_t size, bool endflag){
     if(pData == NULL){
         DRV_DBG("pData is NULL");
-        return;
+        return false;
     }
     uint8_t *pBuf = (uint8_t *)pData;
-    size_t remain =  size ;
+    uint16_t remain =  size ;
+    uint8_t ret = 0;
+    DRV_DBG();
     flush();
-    //for(int i = 0; i < size; i++){
-    //    DRV_DBG(pBuf[i],HEX);
-    //}
-    DRV_DBG(size);
+    DRV_DBG();
     while(remain){
         size = (remain > IIC_MAX_TRANSFER) ? IIC_MAX_TRANSFER : remain;
+        remain -= size;
         _pWire->beginTransmission(_addr);
         _pWire->write(pBuf, size);
-        _pWire->endTransmission();
-        remain -= size;
-        pBuf += size;
+        if(remain){
+            ret = _pWire->endTransmission(false);
+            pBuf += size;
+        }else{
+            ret = _pWire->endTransmission(endflag);
+        }
+        if(ret != 0) return false;
         yield();
-
     }
+    return true;
 }
-
-uint8_t DFRobot_FlashMoudle_IIC::recvData(void* pData, size_t size){
+bool DFRobot_FlashMoudle_IIC::recvData(void* pData, uint16_t size, bool endflag){
     if(pData == NULL){
         DRV_DBG("pData is NULL");
-        return 0;
+        return false;
     }
     uint8_t *pBuf = (uint8_t *)pData;
-    size_t remain =  size;
-    uint8_t len = 0;
+    uint16_t remain =  size ;
     while(remain){
         size = (remain > IIC_MAX_TRANSFER) ? IIC_MAX_TRANSFER : remain;
-        _pWire->requestFrom(_addr, size);
+        remain -= size;
+        if(remain) _pWire->requestFrom(_addr, size, false);
+        else _pWire->requestFrom(_addr, size, endflag);
         for(size_t i = 0; i < size; i++){
-            //uint32_t t = millis();
             pBuf[i] = _pWire->read();
-            DRV_DBG(pBuf[i],HEX);
             yield();
         }
-        remain -= size;
-        pBuf += size;
-        len += size;
+        if(remain) pBuf += size;
     }
-    return len;
-}
-
-void DFRobot_FlashMoudle_IIC::writeReg(uint8_t reg, void* pData, size_t size){
-    if(pData == NULL){
-        DRV_DBG("pData is NULL");
-        return ;
-    }
-    uint8_t *pBuf = (uint8_t *)pData;
-    size_t remain =  size;
-    flush();
-    //for(int i = 0; i < size; i++){
-     //   DRV_DBG(pBuf[i],HEX);
-    //}
-    while(remain){
-        size = (remain > (IIC_MAX_TRANSFER - 2)) ? (IIC_MAX_TRANSFER - 2) : remain;
-        _pWire->beginTransmission(_addr);
-        _pWire->write(reg);
-        _pWire->write((uint8_t)0x00); //写
-        _pWire->write(pBuf, size);
-        _pWire->endTransmission();
-        reg += size;
-        remain -= size;
-        pBuf += size;
-        //delay(50);
-        yield();
-    }
-}
-uint8_t DFRobot_FlashMoudle_IIC::readReg(uint8_t reg, void* pData, size_t size){
-    if(pData == NULL){
-        DRV_DBG("pData is NULL");
-        return 0;
-    }
-    uint8_t *pBuf = (uint8_t *)pData;
-    size_t remain =  size;
-    flush();
-    uint8_t readlen = 0;
-    while(remain){
-        size = (remain > (IIC_MAX_TRANSFER)) ? (IIC_MAX_TRANSFER) : remain;
-        _pWire->beginTransmission(_addr);
-        _pWire->write(reg);
-        _pWire->write(0x80); //读
-        _pWire->endTransmission();
-        _pWire->requestFrom(_addr, size);
-        for(size_t i = 0; i < size; i++){
-            //uint32_t t = millis();
-            pBuf[i] = _pWire->read();
-            //DRV_DBG(pBuf[i],HEX);
-            yield();
-        }
-        readlen += size;
-        reg += size;
-        remain -= size;
-        pBuf += size;
-        //delay(2);
-    }
-    return readlen;
+    return true;
 }
 
 void DFRobot_FlashMoudle_IIC::flush(){
     if(_pWire->available()){
         _pWire->read();
         delay(1);
+        yield();
     }
 }

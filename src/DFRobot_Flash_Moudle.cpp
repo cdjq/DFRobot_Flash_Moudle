@@ -25,7 +25,7 @@
 DFRobot_File DFRobot_File::openNextFile(uint8_t mode) {
   char name[13];
   DFRobot_FlashFile f;
-  if(_file->readDir(name) == 0){
+  if(_file->readDir(name, sizeof(name)) == 0){
     if(f.open(_file, name, mode)){
       return DFRobot_File(f, name);
     }else{
@@ -51,6 +51,7 @@ DFRobot_FlashMoudle::~DFRobot_FlashMoudle(){
   
 }
 
+/*
 DFRobot_FlashFile DFRobot_FlashMoudle::getParentDir(const char *filepath, int *index) {
   // get parent directory
   DFRobot_FlashFile d1 = _root; // start with the mostparent, root!
@@ -59,7 +60,7 @@ DFRobot_FlashFile DFRobot_FlashMoudle::getParentDir(const char *filepath, int *i
   // we'll use the pointers to swap between the two objects
   DFRobot_FlashFile *parent = &d1;
   DFRobot_FlashFile *subdir = &d2;
-  
+
   const char *origpath = filepath;
   //rt_kprintf("fun=%s, %s %d\n", __func__, filepath, strchr(filepath, '/'));
 
@@ -70,7 +71,7 @@ DFRobot_FlashFile DFRobot_FlashMoudle::getParentDir(const char *filepath, int *i
       continue;
     }
     
-    if (! strchr(filepath, '/')) {
+    if (!strchr(filepath, '/')) {
       // it was in the root directory, so leave now
       break;
     }
@@ -82,28 +83,52 @@ DFRobot_FlashFile DFRobot_FlashMoudle::getParentDir(const char *filepath, int *i
     char subdirname[13];
     strncpy(subdirname, filepath, idx);
     subdirname[idx] = 0;
-
-    // close the subdir (we reuse them) if open
-    subdir->close();
-    if (! subdir->open(parent, subdirname, FILE_READ)) {
+    if(subdir->isOpen()){
+      subdir->close();
+    }
+    if (!subdir->open(parent, subdirname, FILE_READ)) {
       // failed to open one of the subdirectories
       return DFRobot_FlashFile();
     }
     // move forward to the next subdirectory
     filepath += idx;
 
-    // we reuse the objects, close it.
-    parent->close();
+    // we reuse the objects, close it
 
     // swap the pointers
     DFRobot_FlashFile *t = parent;
     parent = subdir;
     subdir = t;
+    memcpy(subdir, &d2, sizeof(DFRobot_FlashFile));
   }
 
   *index = (int)(filepath - origpath);
   // parent is now the parent diretory of the file!
   return *parent;
+}
+*/
+void DFRobot_FlashMoudle::getParentDir(const char *filepath, int *index){
+  const char *origpath = filepath;
+  while (strchr(filepath, '/')) {
+    // get rid of leading /'s
+    if (filepath[0] == '/') {
+      filepath++;
+      continue;
+    }
+    
+    if (!strchr(filepath, '/')) {
+      // it was in the root directory, so leave now
+      break;
+    }
+
+    // extract just the name of the next subdirectory
+    uint8_t idx = strchr(filepath, '/') - filepath;
+    if (idx > 12)
+      idx = 12;    // dont let them specify long names
+    filepath += idx;
+  }
+  *index = (int)(filepath - origpath);
+  // parent is now the parent diretory of the file!
 }
 /*
 bool DFRobot_FlashMoudle::removeDirectory(DFRobot_FlashFile *parent, DFRobot_File dir){
@@ -126,57 +151,44 @@ uint8_t DFRobot_FlashMoudle::begin(DFRobot_Driver *drv) {
 DFRobot_File DFRobot_FlashMoudle::open(const char *filepath, uint8_t mode){
   DFRobot_FlashFile file;
   int pathidx;
-  //if(!_root.reRootDir()){
-  //  return DFRobot_File();
-  //}
-  // do the interative search
-  DFRobot_FlashFile parentdir = getParentDir(filepath, &pathidx);
+  char *pathsave = (char *)filepath;
+  getParentDir(filepath, &pathidx);
   // no more subdirs!
   
   filepath += pathidx;
-  
-  if (! filepath[0]) {
-    // it was the directory itself!
-    return DFRobot_File(parentdir, "/");
+  DBG(filepath);
+  if (!_root.isOpen()){
+    return DFRobot_File();
   }
 
-  if (!parentdir.isOpen())
-    return DFRobot_File();
-  
-  if (parentdir.isRoot()) {
-    if ( ! file.open(_root, filepath, mode)) {
+  if (!filepath[0]) {
+    // it was the directory itself!
+    return DFRobot_File(_root, "/");
+  }
+
+  if (!file.open(_root, pathsave, mode)) {
+      // failed to open the file :(
+      return DFRobot_File();
+  }
+
+ /* if (parentdir.isRoot()) {
+    if (!file.open(_root, filepath, mode)) {
       // failed to open the file :(
       return DFRobot_File();
     }
     // dont close the root!
   } else {
-    if ( ! file.open(parentdir, filepath, mode)) {
+    if (!file.open(parentdir, filepath, mode)) {
       return DFRobot_File();
     }
     // close the parent
     parentdir.close();
-  }
-
-  
-   /*if(!file.open(_root, filename, mode)){
-     DBG("open failed.");
-     return  DFRobot_File();
-   }
-   DBG("open end.");
-   DBG("ok.");*/
-   return DFRobot_File(file, filepath);
+  }*/
+  return DFRobot_File(file, filepath);
 }
 
 boolean DFRobot_FlashMoudle::exists(const char *filepath) {
-  DFRobot_FlashFile child;
-  //1.先判断是不是目录，然后判断是不是文件
-  boolean exists = child.open(_root, filepath, FILE_READ); //以只读的方式打开
-  
-  if (exists) {
-     child.close(); 
-  }
-  
-  return exists;
+  return _root.exists(filepath);
 }
 
 boolean DFRobot_FlashMoudle::mkdir(const char *filepath) {
@@ -185,14 +197,12 @@ boolean DFRobot_FlashMoudle::mkdir(const char *filepath) {
     A rough equivalent to `mkdir -p`.
    */
   if(exists(filepath)) return true;
-  DFRobot_FlashFile child;
-  return child.makeDir(&_root, filepath);
-
+  return _root.makeDir(filepath);
 }
 
 boolean DFRobot_FlashMoudle::remove(const char *filepath) {
   DFRobot_FlashFile child;
-  return child.remove(&_root, filepath);
+  return _root.remove(filepath);
 }
 
 boolean DFRobot_FlashMoudle::rmdir(const char *filepath) {

@@ -37,6 +37,23 @@ char *DFRobot_File::name(void) {
   return _name;
 }
 
+
+String DFRobot_File::getAbsolutePath(){
+  String str = "";
+  if(_file){
+    str = _file->absolutePath();
+  }
+  return str;
+}
+
+String DFRobot_File::getParentDirectory(){
+  String str = "";
+  if(_file){
+    str = _file->parentDirectory();
+  }
+  return str;
+}
+
 boolean DFRobot_File::isDirectory(void) {
   return (_file && _file->isDir());
 }
