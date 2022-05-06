@@ -47,7 +47,7 @@ void setup(){
   }
   Serial.println("done.");
 
-  myFile = flash.open("SENSOR.CSV", FILE_WRITE);
+  myFile = flash.open("SENSOR.CSV", FILE_APPEND);
 
   if(!myFile){
     Serial.println("error opening SENSOR.csv.");
