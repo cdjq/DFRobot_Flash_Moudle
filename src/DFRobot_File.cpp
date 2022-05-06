@@ -1,17 +1,26 @@
 /*!
- * @file DFRobot_Flash_Moudle.cpp
- * @brief 定义DFRobot_Sensor 类的基础结构
- * @details 这是一个虚拟的传感器，IIC地址不可改变,不对应任何实物，可以通过IIC和SPI口来控制它，假设它有下面这些功能
- * @n 向寄存器0里写入数据，点亮不同颜色的LED灯
- * @n 从寄存器2里读出数据，高四位表示光线强度，低四位表示声音强度
- * @n 从寄存器3 bit0里写入数据，写1表示正常模式，写0表示低功耗模式
- * @n 从寄存器4 读取数据，读到的是芯片版本0xDF
+ * @file DFRobot_File.cpp
+ * @brief DFRobot_File 类的实现
+ * @details 文件的相关操作的实现：
+ * @n 获取文件名
+ * @n 获取父级目录
+ * @n 获取绝对路径
+ * @n 判断是目录还是文件
+ * @n 读或写文件
+ * @n 打开并读取下级目录
+ * @n 返回读取目录的首位置
+ * @n 判断文件是否打开
+ * @n 获取或设置文件读写指针的位置
+ * @n 获取文件的大小
+ * @n 关闭或截断或关闭文件
+ * @n 同步文件内容
+ * @n 判断文件还有多少字节未读取
  * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)
- * @author [Ouki](ouki.wang@dfrobot.com)
+ * @author [Arya](xue.peng@dfrobot.com)
  * @version  V1.0
- * @date  2019-07-13
- * @url https://github.com/ouki-wang/DFRobot_Sensor
+ * @date  2021-11-19
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
  */
 #include <Arduino.h>
 #include "DFRobot_Flash_Moudle.h"
@@ -120,12 +129,14 @@ uint32_t DFRobot_File::size() {
   return _file->fileSize();
 }
 
-void DFRobot_File::close() {
+bool DFRobot_File::close(bool truncate) {
+  bool status = false;
   if (_file) {
-    _file->close();
+    status = _file->close(truncate);
     free(_file); 
     _file = NULL;
   }
+  return status;
 }
 
 DFRobot_File::operator bool() {
@@ -134,24 +145,3 @@ DFRobot_File::operator bool() {
   return false;
 }
 
-/*
-boolean DFRobot_File::del(uint32_t pos, uint32_t num, bool flag){
-  //
-  if (_file) 
-    return  _file->del(pos, num, flag);
-  return false;
-}
-
-boolean DFRobot_File::insert(uint32_t pos, uint8_t c, uint32_t num){
-  //
-  if (_file) 
-    return  _file->insert(pos, c, num);
-  return false;
-}
-boolean DFRobot_File::insert(uint32_t pos, void *buf, uint32_t len){
-  //
-  if (_file) 
-    return  _file->insert(pos, buf, len);
-  return false;
-}
-*/

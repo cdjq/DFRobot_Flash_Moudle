@@ -1,16 +1,9 @@
 /*!
  * @file DFRobot_Flash_Moudle.h
- * @brief 此文件中定义了DFRobot_File基本文件操作类，DFRobot_FlashMoudle flash模块操作类， DFRobot_FlashMoudle_IIC驱动类。
- * @details 这是一个文件系统库，专门用来操作DFRobot自制的一款通信接口为I2C的flash Memory Moudle。使用该库，可以用文件的方式对
- * @n 该flash存储模块进行操作，你可以直接在该模块上面创建，读，写文件，或者创建目录。此驱动它有以下特点：
- * @n 1. 能实现用文件的方式操作特定的存储模块;
- * @n 2. 目前只支持短文件名
- * @n 3. 目前支持I2C驱动
- * @n 相关类的简单介绍：
- * @n DFRobot_File： 此类定义了文件或目录的简单操作，包括读、写、增加、删除文件内容，打开目录的下级文件，以及获取文件名或目录名
- * @n DFRobot_FlashMoudle：此类定义了flash模块的相关操作，可以用来在该存储模块内创建，打开，增加，删除多个文件或目录，并查询相关
- * @n 文件或目录是否存在。
- * @n DFRobot_FlashMoudle_IIC 此类定义了模块的接口驱动，用户只需操作begin函数
+ * @brief 定义了 DFRobot_File 类，DFRobot_FlashMoudle 类 和 DFRobot_FlashMoudle_IIC 类的基础结构。 
+ * @details DFRobot_File 类定义了文件和目录的相关操作；
+ * @n DFRobot_FlashMoudle 类定义了磁盘的相关操作，如打开文件，移除文件，创建目录，判断文件或目录是否存在
+ * @n DFRobot_FlashMoudle_IIC 类继承并实现了DFRobot_Driver抽象类的相关实现
  * @n 
  * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)
@@ -19,6 +12,7 @@
  * @date  2021-11-19
  * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
  */
+
 #ifndef __DFROBOT_FLASH_MOUDLE_H
 #define __DFROBOT_FLASH_MOUDLE_H
 
@@ -43,6 +37,7 @@
 
 #define FILE_READ  0x01
 #define FILE_WRITE (0x01 | 0x02 | 0x10) //read write ALWAYS  apend:0x30
+#define FILE_APPEND		(0x01 | 0x02 | 0x10 | 0x30)
 
 class DFRobot_File : public Stream{
 private:
@@ -51,6 +46,7 @@ private:
 public:
   /**
    * @fn DFRobot_File
+   * @brief DFRobot_File类构造
    * @param f DFRobot_FlashFile类对象
    * @param name 文件名
    */
@@ -68,6 +64,7 @@ public:
    * @return The Strorage type and file or directory name.
    */
   char * name();
+
   /**
    * @fn getAbsolutePath
    * @brief Get absolute path of file or directory.
@@ -81,6 +78,7 @@ public:
    * @return The parent directory path of file or directory.
    */
   String getParentDirectory();
+  
   /**
    * @fn write
    * @brief Write one byte into file. 
@@ -88,6 +86,7 @@ public:
    * @return Returns the size in bytes written
    */
   virtual size_t write(uint8_t val);
+  
   /**
    * @fn write
    * @brief Write multiple bytes into file. 
@@ -96,12 +95,14 @@ public:
    * @return Returns the size in bytes written
    */
   virtual size_t write(const uint8_t *buf, size_t size);
+  
   /**
    * @fn read
    * @brief Read 1 byte in file, 文件读指针自动加1
    * @return Return the readings
    */
   virtual int read();
+  
   /**
    * @fn read
    * @brief Read multiple bytes in file, 文件读指针自动增加
@@ -110,23 +111,27 @@ public:
    * @return Returns the size in bytes written
    */
   int read(void *buf, uint16_t nbyte);
+  
   /**
    * @fn peek
    * @brief Read 1 byte in file. Reads the value at the same position in the file.文件读指针不变
    * @return Return the readings
    */
   virtual int peek();
+  
   /**
    * @fn flush
    * @brief Wait for the data to be writen into file,等待数据被写入文件
    */
   virtual void flush();
+  
   /**
    * @fn available
    * @brief Get the number of bytes in file.
    * @return 返回文件当前指针到文件结束位置字节的数量
    */
   virtual int available();
+  
   /**
    * @fn seek
    * @brief Sets a file's position.
@@ -134,46 +139,49 @@ public:
    * @return true, is returned for success and the value zero, false, is returned for failure.
    */
   boolean seek(uint32_t pos);
+  
   /**
    * @fn position
-   * @brief The current position for a file or directory.
+   * @brief The current position for a file.
    * @return The current position.
    */
   uint32_t position();
+  
   /**
    * @fn size
-   * @brief The total number of bytes in a file or directory.
+   * @brief The total number of bytes in a file.
    * @return file size.
    */
   uint32_t size();
+  
   /**
    * @fn close
-   * @brief close the file.
+   * @brief close the file or close and truncate the file.
+   * @param truncate 在关闭时是否截断读写指针之后的内容
+   * @n     false 不截断
+   * @n     true  截断
+   * @return close or close and truncate result.
+   * @retval false failed.
+   * @retval true  sucess.
    */
-  void close();
+  bool close(bool truncate = false);
+  
   /**
    * @fn isDirectory
    * @brief Determine if the current file is a directory or a file.
    * @return True if this is a UdFile for a directory else false.
    */
   boolean isDirectory(void);
-  /**
-   * @fn del
-   * @brief 删除文件里的内容(能不用，请尽量不要使用，flash有擦写次数限制，尽量不要使用)
-   * @param pos 光标在文件中距离起始位置的位置
-   * @param num 删除的字符数，如果是中文，请自动乘以2
-   * @param flag 删除方向， 
-   * @n     true: 删除光标前面的字符
-   * @n     false: 删除光标后面的字符
-   * @return 删除状态
-   * @n     true: 成功
-   * @n     false: 失败
-   */
-  //boolean del(uint32_t pos, uint32_t num, bool flag = true);
-  //boolean insert(uint32_t pos, uint8_t c, uint32_t num);
-  //boolean insert(uint32_t pos, void *buf, uint32_t len);
 
+  /**
+   * @fn bool
+   * @brief 判断文件或目录是否被打开
+   * @return 打开状态
+   * @retval true  打开成功
+   * @retval false 打开失败.
+   */
   operator bool();
+
   /**
    * @fn openNextFile
    * @brief Open all files or directories in the current directory
@@ -181,6 +189,7 @@ public:
    * @return Return file object.
    */
   DFRobot_File openNextFile(uint8_t mode = FILE_READ);
+
   /**
    * @fn rewindDirectory
    * @brief Set the file's current position to zero.
@@ -195,15 +204,20 @@ private:
   DFRobot_Flash _card;
   DFRobot_FlashFile _root;
   friend class DFRobot_File;
-  //DFRobot_FlashFile getParentDir(const char *filepath, int *indx);
   void getParentDir(const char *filepath, int *index);
 public:
- /**
-  * @fn DFRobot_FlashMoudle
-  * @brief 空构造函数.
-  */
+  /**
+   * @fn DFRobot_FlashMoudle
+   * @brief 空构造函数.
+   */
   DFRobot_FlashMoudle();
+
+  /**
+   * @fn ~DFRobot_FlashMoudle
+   * @brief 析构函数.
+   */
   ~DFRobot_FlashMoudle();
+
   /**
    * @fn begin
    * @brief flash模块初始化
@@ -219,16 +233,16 @@ public:
    * @brief 打开文件或目录
    * @details 以读写创建或只读的方式打开文件或目录，其中目录打开只能以只读的方式打开。
    * @param filepath 文件或目录的绝对路径，根目录为"/"
-   * @n     根目录的目录或文件包含最多递归10级，/dir1/dir2/dir3/dir4/dir5/dir6/dir6/dir7/dir8/dir9, dir9下不能再创建任何目录和文件
-   * @n     单个目录项名字不能超过11个字符
    * @param mode 打开权限
-   * @n     FILE_READ  只读权限，此种方式可以打开文件或目录
-   * @n     FILE_WRITE  读写创建权限，此种方式只可以打开文件，如果文件存在则以读写方式打开，如果不存在则创建一个新的文件再以读写的方式打开
+   * @n     FILE_READ   以只读的方式打开文件或目录
+   * @n     FILE_WRITE  以读写的方式打开文件，打开后读写指针位置在文件首位
+   * @n     FILE_APPEND 以追加的方式打开文件，打开后读写指针位置在文件末尾
    * @return 返回DFRobot_File类对象
-   * @attention 可同时打开10个文件和10个目录（包含根目录），注意根目录由系统打开，用户无法关闭它
+   * @attention 注意根目录由系统打开，用户无法关闭它
    */
   DFRobot_File open(const char *filepath, uint8_t mode = FILE_READ);
   DFRobot_File open(const String &filepath, uint8_t mode = FILE_READ) { return open( filepath.c_str(), mode ); }
+  
   /**
    * @fn exists
    * @brief 查看某个文件或目录是否是否存在
@@ -240,38 +254,35 @@ public:
    */
   boolean exists(const char *filepath);
   boolean exists(const String &filepath) { return exists(filepath.c_str()); }
+  
   /**
    * @fn mkdir
    * @brief 创建目录
    * @param filepath 目录的绝对路径
-   * @n     根目录的目录或文件包含最多递归10级，/dir1/dir2/dir3/dir4/dir5/dir6/dir6/dir7/dir8/dir9, dir9下不能再创建任何目录和文件
-   * @n     单个目录项名字不能超过11个字符
    * @return 返回创建状态
    * @retval true 创建成功或该目录已经存在
    * @retval false 创建失败
    */
   boolean mkdir(const char *filepath);
   boolean mkdir(const String &filepath) { return mkdir(filepath.c_str()); }
+  
   /**
    * @fn remove
    * @brief 移除空文件夹或文件
    * @details 此函数用来删除文件，可以移除单个文件或空文件夹
-   * @param filepath 目录的绝对路径，根目录为"/"
-   * @n     根目录的目录或文件包含最多递归10级，/dir1/dir2/dir3/dir4/dir5/dir6/dir6/dir7/dir8/dir9, dir9下不能再创建任何目录和文件
-   * @n     单个目录项名字不能超过11个字符
+   * @param filepath 目录或文件的绝对路径。根目录为"/"，不可移除
    * @return 返回移除状态
    * @retval true 移除成功
    * @retval false 移除失败
    */
   boolean remove(const char *filepath);
   boolean remove(const String &filepath) { return remove(filepath.c_str()); }
+  
   /**
    * @fn rmdir
    * @brief 移除空文件夹或文件
    * @details 此函数用来删除文件，可以移除单个文件或空文件夹
-   * @param filepath 目录的绝对路径，根目录为"/"
-   * @n     根目录的目录或文件包含最多递归10级，/dir1/dir2/dir3/dir4/dir5/dir6/dir6/dir7/dir8/dir9, dir9下不能再创建任何目录和文件
-   * @n     单个目录项名字不能超过11个字符
+   * @param filepath 目录或文件的绝对路径。根目录为"/"，不可移除
    * @return 返回移除状态
    * @retval true 移除成功
    * @retval false 移除失败
@@ -288,12 +299,18 @@ public:
    * @fn DFRobot_FlashMoudle_IIC
    * @brief constructor function.
    * @param addr I2C地址，固定为0x55
+   * @param pWire TwoWire类指针
    */
-  DFRobot_FlashMoudle_IIC(uint8_t addr = 0x55,TwoWire *pWire=&Wire);
+  DFRobot_FlashMoudle_IIC(uint8_t addr = 0x55, TwoWire *pWire=&Wire);
+  /**
+   * @fn ~DFRobot_FlashMoudle_IIC
+   * @brief 析构函数
+   */
   ~DFRobot_FlashMoudle_IIC();
   /**
    * @fn begin
    * @brief IIC接口初始化
+   * @param freq I2C通信频率
    * @return 返回初始化状态
    * @retval 0 初始化成功
    * @retval 1 DFRobot_FlashMoudle_IIC构造中传入的pWire为NULL

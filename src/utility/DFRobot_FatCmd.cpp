@@ -1,17 +1,32 @@
 /*!
  * @file DFRobot_FatCmd.cpp
- * @brief 定义DFRobot_FatCmd 类的基础结构，基础方法的实现
- * @details 这是一个虚拟的传感器，IIC地址不可改变,不对应任何实物，可以通过IIC和SPI口来控制它，假设它有下面这些功能
- * @n 向寄存器0里写入数据，点亮不同颜色的LED灯
- * @n 从寄存器2里读出数据，高四位表示光线强度，低四位表示声音强度
- * @n 从寄存器3 bit0里写入数据，写1表示正常模式，写0表示低功耗模式
- * @n 从寄存器4 读取数据，读到的是芯片版本0xDF
+ * @brief 定义 DFRobot_DFR0870_Protocol 类的实现
+ * @details 此协议用于Arduino主控同Flash Memory Moudle模块交互，目前能实现的交互内容为：
+ * @n CMD_RESET            复位Flash Memory Moudle模块
+ * @n CMD_FLASH_INFO       读取Flash Memory Moudle容量存储信息
+ * @n CMD_READ_ADDR        读取IIC地址命令
+ * @n CMD_SET_ADDR         设置I2C地址命令（此命令模块掉电后生效）
+ * @n CMD_OPEN_FILE        打开文件
+ * @n CMD_CLOSE_FILE       关闭文件或截断并关闭文件
+ * @n CMD_WRITE_FILE       写文件命令
+ * @n CMD_READ_FILE        读文件命令
+ * @n CMD_SYNC_FILE        同步文件，将缓存数据写入实际文件中的命令
+ * @n CMD_SEEK_FILE        设置文件读写指针位置命令
+ * @n CMD_MKDIR            创建文件夹命令
+ * @n CMD_OPEN_DIR         打开目录命令
+ * @n CMD_CLOSE_DIR        关闭目录命令
+ * @n CMD_REMOVE           移除文件或目录
+ * @n CMD_FILE_ATTR        获取文件属性：0-文件或目录不存在 1-这是一个文件 2-FAT12根目录 3-FAT16根目录 4-FAT32根目录 5-子目录
+ * @n CMD_READ_DIR         读取目录下的所有文件项和目录项
+ * @n CMD_REWIND           回到读目录起始位置
+ * @n CMD_ABSPATH          获取当前目录或文件的绝对路径
+ * @n CMD_PARENTDIR        获取当前目录或文件的父级目录路径  
  * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)
- * @author [Ouki](ouki.wang@dfrobot.com)
+ * @author [Arya](xue.peng@dfrobot.com)
  * @version  V1.0
- * @date  2019-07-13
- * @url https://github.com/ouki-wang/DFRobot_Sensor
+ * @date  2022-04-28
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
  */
 #include <Arduino.h>
 #include "DFRobot_FatCmd.h"
@@ -97,7 +112,7 @@ static const uint8_t  DFR0870_CMD_STRUCT[] PROGMEM = {
   CMD_READ_ADDR,  0x03, 0, 1 ,
   CMD_SET_ADDR,   0x03, 1, 0 ,
   CMD_OPEN_FILE,  0x02, 2, 9 ,
-  CMD_CLOSE_FILE, 0x03, 1, 0 ,
+  CMD_CLOSE_FILE, 0x03, 2, 0 ,
   CMD_WRITE_FILE, 0x02, 1, 2 ,
   CMD_READ_FILE,  0x01, 3, 0 ,
   CMD_SYNC_FILE,  0x03, 1, 0 ,
@@ -124,12 +139,7 @@ static sCmdStruct_t getCmdStructConfig(uint8_t cmd){
   cmdStu.fix         = pgm_read_byte(addr++);
   cmdStu.sendLen     = (uint16_t)pgm_read_byte(addr++);
   cmdStu.responseLen = (uint16_t)pgm_read_byte(addr);
-  //Serial.print(cmdStu.cmd,HEX);
-  //Serial.print("=");
-  //Serial.println(cmd,HEX);
-  //Serial.print("fix=");Serial.println(cmdStu.fix,HEX);
-  //Serial.print("sendLen=");Serial.println(cmdStu.sendLen);
-  //Serial.print("responseLen=");Serial.println(cmdStu.responseLen);
+
   return cmdStu;
 }
 
@@ -391,7 +401,7 @@ bool DFRobot_DFR0870_Protocol::openFile(const char *name, int8_t pid, uint8_t of
   return true;
 }
 
-bool DFRobot_DFR0870_Protocol::closeFile(int8_t id){
+bool DFRobot_DFR0870_Protocol::closeFile(int8_t id, bool truncate){
   sCmdStruct_t cmdStu = getCmdStructConfig(CMD_CLOSE_FILE);
   pSendCmdPkt_t sendPkt = (pSendCmdPkt_t)packedCmdPacket(cmdStu.cmd, 0);
 
@@ -400,6 +410,7 @@ bool DFRobot_DFR0870_Protocol::closeFile(int8_t id){
     return false;
   }
   sendPkt->buf[0] = (uint8_t)id;
+  sendPkt->buf[1] = (uint8_t)truncate;
   if(writeCmdPacket(sendPkt, (SEND_PKT_PRE_FIX_LEN + ((sendPkt->lenH << 8) | sendPkt->lenL))) == false){
     CMD_DBG("CMD_CLOSE_FILE send packet fail.");
     free(sendPkt);

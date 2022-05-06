@@ -6,42 +6,17 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-DFRobot_CsvFile	KEYWORD1
+DFRobot_CSV_0870	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-DFRobot_CsvFile	KEYWORD2
 begin	KEYWORD2
-getRow	KEYWORD2
-getColumn	KEYWORD2
-getRowsAndColumns	KEYWORD2
-readRow	KEYWORD2
-writeRow	KEYWORD2
-deleteRow	KEYWORD2
-readColumn	KEYWORD2
-writeColumn	KEYWORD2
-deleteColumn	KEYWORD2
-readItem	KEYWORD2
-writeItem	KEYWORD2
-deleteItem	KEYWORD2
 print	KEYWORD2
 println	KEYWORD2
+write	KEYWORD2
 
-
-#######################################
-# Instances (KEYWORD2)
-#######################################
-
-
-#######################################
-# Constants (LITERAL1)
-#######################################
-eLargestRow	LITERAL1
-eLargestColumn	LITERAL1
-eSmallestRow	LITERAL1
-eSmallestColumn	LITERAL1
 
 #######################################
 # Datatypes (KEYWORD1)
@@ -54,6 +29,8 @@ DFRobot_File	KEYWORD1
 #######################################
 
 name	KEYWORD2
+getAbsolutePath	KEYWORD2
+getParentDirectory	KEYWORD2
 write	KEYWORD2
 read	KEYWORD2
 peek	KEYWORD2
@@ -64,8 +41,6 @@ position KEYWORD2
 size	KEYWORD2
 close	KEYWORD2
 isDirectory	KEYWORD2
-del	KEYWORD2
-insert	KEYWORD2
 openNextFile	KEYWORD2
 rewindDirectory	KEYWORD2
 
@@ -96,4 +71,7 @@ DFRobot_FlashMoudle_IIC	KEYWORD1
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
+sendData	KEYWORD2
+recvData	KEYWORD2
+flush	KEYWORD2
 begin	KEYWORD2

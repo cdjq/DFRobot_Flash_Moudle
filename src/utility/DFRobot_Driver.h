@@ -1,18 +1,13 @@
 /*!
  * @file DFRobot_Driver.h
- * @brief 定义DFRobot_FatCmd 类的基础结构
- * @details 这是自定义的主机和从机通信的命令包集，通过这些功能函数能够得到发送的命令包具体内容，包括：
- * @n 获取读地址的命令包内容；
- * @n 获取修改地址的命令包内容；
- * @n 获取当前工作目录的命令包内容；
- * @n 获取返回根目录的命令包内容
- * @n 获取切换工作目录的命令包内容
+ * @brief 定义 DFRobot_Driver 抽象类的基础结构
+ * @details 组织了一系列的通信接口
  * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)
  * @author [Arya](xue.peng@dfrobot.com)
  * @version  V1.0
  * @date  2021-10-09
- * @url https://github.com/DFRobot/DFRobot_
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
  */
 #ifndef __DFROBOT_DRIVER_H
 #define __DFROBOT_DRIVER_H

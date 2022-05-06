@@ -1,5 +1,5 @@
 /*!
- * @file DFRobot_Flash_Moudle.h
+ * @file DFRobot_Flash_Moudle.cpp
  * @brief 此文件中定义了DFRobot_File基本文件操作类，DFRobot_FlashMoudle flash模块操作类， DFRobot_FlashMoudle_IIC驱动类。
  * @details 这是一个文件系统库，专门用来操作DFRobot自制的一款通信接口为I2C的flash Memory Moudle。使用该库，可以用文件的方式对
  * @n 该flash存储模块进行操作，你可以直接在该模块上面创建，读，写文件，或者创建目录。此驱动它有以下特点：
@@ -11,6 +11,20 @@
  * @n DFRobot_FlashMoudle：此类定义了flash模块的相关操作，可以用来在该存储模块内创建，打开，增加，删除多个文件或目录，并查询相关
  * @n 文件或目录是否存在。
  * @n DFRobot_FlashMoudle_IIC 此类定义了模块的接口驱动，用户只需操作begin函数
+ * @n 
+ * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
+ * @license     The MIT License (MIT)
+ * @author [Arya](xue.peng@dfrobot.com)
+ * @version  V1.0
+ * @date  2021-11-19
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
+ */
+
+/*!
+ * @file DFRobot_Flash_Moudle.cpp
+ * @brief 定义了 DFRobot_File 类的部分，以及DFRobot_FlashMoudle 类的实现。 
+ * @details DFRobot_File 类实现了目录的相关操作；
+ * @n DFRobot_FlashMoudle 类实现磁盘的相关操作，如打开文件，移除文件，创建目录，判断文件或目录是否存在
  * @n 
  * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)
@@ -51,62 +65,6 @@ DFRobot_FlashMoudle::~DFRobot_FlashMoudle(){
   
 }
 
-/*
-DFRobot_FlashFile DFRobot_FlashMoudle::getParentDir(const char *filepath, int *index) {
-  // get parent directory
-  DFRobot_FlashFile d1 = _root; // start with the mostparent, root!
-  DFRobot_FlashFile d2;
-
-  // we'll use the pointers to swap between the two objects
-  DFRobot_FlashFile *parent = &d1;
-  DFRobot_FlashFile *subdir = &d2;
-
-  const char *origpath = filepath;
-  //rt_kprintf("fun=%s, %s %d\n", __func__, filepath, strchr(filepath, '/'));
-
-  while (strchr(filepath, '/')) {
-    // get rid of leading /'s
-    if (filepath[0] == '/') {
-      filepath++;
-      continue;
-    }
-    
-    if (!strchr(filepath, '/')) {
-      // it was in the root directory, so leave now
-      break;
-    }
-
-    // extract just the name of the next subdirectory
-    uint8_t idx = strchr(filepath, '/') - filepath;
-    if (idx > 12)
-      idx = 12;    // dont let them specify long names
-    char subdirname[13];
-    strncpy(subdirname, filepath, idx);
-    subdirname[idx] = 0;
-    if(subdir->isOpen()){
-      subdir->close();
-    }
-    if (!subdir->open(parent, subdirname, FILE_READ)) {
-      // failed to open one of the subdirectories
-      return DFRobot_FlashFile();
-    }
-    // move forward to the next subdirectory
-    filepath += idx;
-
-    // we reuse the objects, close it
-
-    // swap the pointers
-    DFRobot_FlashFile *t = parent;
-    parent = subdir;
-    subdir = t;
-    memcpy(subdir, &d2, sizeof(DFRobot_FlashFile));
-  }
-
-  *index = (int)(filepath - origpath);
-  // parent is now the parent diretory of the file!
-  return *parent;
-}
-*/
 void DFRobot_FlashMoudle::getParentDir(const char *filepath, int *index){
   const char *origpath = filepath;
   while (strchr(filepath, '/')) {
@@ -130,17 +88,7 @@ void DFRobot_FlashMoudle::getParentDir(const char *filepath, int *index){
   *index = (int)(filepath - origpath);
   // parent is now the parent diretory of the file!
 }
-/*
-bool DFRobot_FlashMoudle::removeDirectory(DFRobot_FlashFile *parent, DFRobot_File dir){
-  DFRobot_FlashFile child;
-  while(1){
-     DFRobot_File entry =  dir.openNextFile();
-     if(!entry){
-       dir.close();
-       return parent.remove(&parent, dir.name());
-     }
-  }
-}*/
+
 
 /*获取卡的基本信息*/
 uint8_t DFRobot_FlashMoudle::begin(DFRobot_Driver *drv) {

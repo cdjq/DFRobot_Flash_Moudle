@@ -9,13 +9,13 @@
  * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
  */
 
-#include "DFRobot_CsvFile.h"
+#include "DFRobot_CSV_0870.h"
 #include "DFRobot_Flash_Moudle.h"
 
 DFRobot_FlashMoudle_IIC iic(/*addr=*/0x55);
 DFRobot_FlashMoudle flash;
 DFRobot_File myFile;
-DFRobot_CsvFile csv;
+DFRobot_CSV_0870 csv;
 
 void setup() {
   // Open serial communications and wait for port to open:
@@ -44,7 +44,7 @@ void setup() {
 
   myFile = flash.open("TEST.CSV", FILE_WRITE);
   
-  uint8_t ret = csv.begin(&myFile);
+  int ret = csv.begin(&myFile);
   if(ret != 0){
     Serial.print("csv initialize fail, ret=");
     Serial.println(ret);
@@ -53,12 +53,12 @@ void setup() {
   
   // if the file opened okay, write to it:
   if(myFile) {
-    Serial.println("Writing to TEST.CSV...");
+    Serial.print("Writing to TEST.CSV...");
     csv.print("group");csv.print("number");csv.println("mark");        //以csv格式往文件写入数据，用print输入每列的值，用println输入值并换行
     csv.print("\"Jerry\"");csv.print('1');csv.println(3.65);
-    csv.print("3,Herny");csv.print("10");csv.println(99.5);
-    // close the file:
-    myFile.close();
+    csv.print("3,Herny");csv.print("10");csv.println(99.5, 1);
+    // close the file and truncate the file:
+    myFile.close(true);
     Serial.println("done.");
   } else {
     // if the file didn't open, print an error:

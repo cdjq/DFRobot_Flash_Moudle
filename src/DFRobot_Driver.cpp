@@ -1,17 +1,14 @@
 /*!
- * @file DFRobot_Flash_Moudle.cpp
- * @brief 定义DFRobot_Sensor 类的基础结构
- * @details 这是一个虚拟的传感器，IIC地址不可改变,不对应任何实物，可以通过IIC和SPI口来控制它，假设它有下面这些功能
- * @n 向寄存器0里写入数据，点亮不同颜色的LED灯
- * @n 从寄存器2里读出数据，高四位表示光线强度，低四位表示声音强度
- * @n 从寄存器3 bit0里写入数据，写1表示正常模式，写0表示低功耗模式
- * @n 从寄存器4 读取数据，读到的是芯片版本0xDF
+ * @file DFRobot_Driver.cpp
+ * @brief 定义 DFRobot_Driver 抽象类子类的实现
+ * @details 一系列的通信接口在不同通信协议下的实现，目前支持
+ * @n I2C 协议
  * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)
- * @author [Ouki](ouki.wang@dfrobot.com)
+ * @author [Arya](xue.peng@dfrobot.com)
  * @version  V1.0
- * @date  2019-07-13
- * @url https://github.com/ouki-wang/DFRobot_Sensor
+ * @date  2021-10-09
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
  */
 #include <Arduino.h>
 #include "DFRobot_Flash_Moudle.h"
@@ -86,8 +83,13 @@ bool DFRobot_FlashMoudle_IIC::recvData(void* pData, uint16_t size, bool endflag)
     while(remain){
         size = (remain > IIC_MAX_TRANSFER) ? IIC_MAX_TRANSFER : remain;
         remain -= size;
+#ifdef __AVR__
+        if(remain) _pWire->requestFrom((uint8_t)_addr, (uint8_t)size, (uint8_t)false);
+        else _pWire->requestFrom((uint8_t)_addr, (uint8_t)size, (uint8_t)endflag);
+#else
         if(remain) _pWire->requestFrom(_addr, size, false);
         else _pWire->requestFrom(_addr, size, endflag);
+#endif
         for(size_t i = 0; i < size; i++){
             pBuf[i] = _pWire->read();
             yield();

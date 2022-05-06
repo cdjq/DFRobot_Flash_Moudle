@@ -84,6 +84,7 @@ void removeDirectory(DFRobot_File dir) {
     }
   }
 }
+
 void printDirectory(DFRobot_File dir, int numTabs) {
   while (true) {
     DFRobot_File entry = dir.openNextFile();

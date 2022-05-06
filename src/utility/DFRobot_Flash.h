@@ -1,18 +1,14 @@
 /*!
- * @file DFRobot_FatCmd.h
- * @brief 定义DFRobot_FatCmd 类的基础结构
- * @details 这是自定义的主机和从机通信的命令包集，通过这些功能函数能够得到发送的命令包具体内容，包括：
- * @n 获取读地址的命令包内容；
- * @n 获取修改地址的命令包内容；
- * @n 获取当前工作目录的命令包内容；
- * @n 获取返回根目录的命令包内容
- * @n 获取切换工作目录的命令包内容
+ * @file DFRobot_Flash.h
+ * @brief 定义 DFRobot_Flash 类 和 DFRobot_FlashFile 类 的基础结构
+ * @details DFRobot_Flash类用于获取Flash Memory Moudle模块的fat类型，磁盘大小，以及复位整个模块
+ * @n DFRobot_FlashFile 类用于组织文件和目录的相关操作
  * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)
  * @author [Arya](xue.peng@dfrobot.com)
  * @version  V1.0
- * @date  2021-10-09
- * @url https://github.com/DFRobot/DFRobot_
+ * @date  2021-04-28
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
  */
 #ifndef __DFROBOT_FLASH_H
 #define __DFROBOT_FLASH_H
@@ -28,13 +24,6 @@
 #include "DFRobot_Driver.h"
 
 ///< Define DBG, change 0 to 1 open the DBG, 1 to 0 to close.  
-#if 0
-#define FLASH_DBG(...) {Serial.print("["); Serial.print(__FUNCTION__); Serial.print("(): "); Serial.print(__LINE__); Serial.print(" ] "); Serial.println(__VA_ARGS__);}
-#else
-#define FLASH_DBG(...)
-#endif
-
-
 class DFRobot_Flash{
 public:
   typedef enum{
@@ -110,7 +99,7 @@ public:
    * @retval true  文件或目录关闭成功
    * @retval false 文件或目录关闭失败
    */
-  bool close();
+  bool close(bool truncate);
   /**
    * @fn write
    * @brief 向文件中写数据

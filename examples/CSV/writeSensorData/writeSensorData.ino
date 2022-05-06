@@ -9,7 +9,7 @@
  * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
  */
 
-#include "DFRobot_CsvFile.h"
+#include "DFRobot_CSV_0870.h"
 #include "DFRobot_Flash_Moudle.h"
 
 #define SENSOR_PIN         A0
@@ -17,12 +17,12 @@
 DFRobot_FlashMoudle_IIC iic(/*addr=*/0x55);
 DFRobot_FlashMoudle flash;
 DFRobot_File myFile;
-DFRobot_CsvFile csv;
+DFRobot_CSV_0870 csv;
 
 uint32_t number = 0; //记录采集的次数，当等于COLLECTION_TIMES时，停止采集
 int      value  = 0; //保存A0口上采集的数据的值
 
-void setup() {
+void setup(){
   // Open serial communications and wait for port to open:
   Serial.begin(115200);
   while (!Serial) {
@@ -30,7 +30,7 @@ void setup() {
   }
   
   Serial.print("Initializing Wire bus...");
-  uint8_t err = iic.begin();
+  int err = iic.begin();
   if(err != 0){
     Serial.print("failed! error code is 0x");
     Serial.println(err, HEX);

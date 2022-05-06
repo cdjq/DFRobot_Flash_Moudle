@@ -1,18 +1,23 @@
 /*!
- * @file DFRobot_FatCmd.cpp
- * @brief 定义DFRobot_FatCmd 类的基础结构，基础方法的实现
- * @details 这是一个虚拟的传感器，IIC地址不可改变,不对应任何实物，可以通过IIC和SPI口来控制它，假设它有下面这些功能
- * @n 向寄存器0里写入数据，点亮不同颜色的LED灯
- * @n 从寄存器2里读出数据，高四位表示光线强度，低四位表示声音强度
- * @n 从寄存器3 bit0里写入数据，写1表示正常模式，写0表示低功耗模式
- * @n 从寄存器4 读取数据，读到的是芯片版本0xDF
+ * @file DFRobot_Flash.cpp
+ * @brief 定义 DFRobot_Flash 类 和 DFRobot_FlashFile 类 的实现
+ * @details DFRobot_Flash类用于获取Flash Memory Moudle模块的fat类型，磁盘大小，以及复位整个模块
+ * @n DFRobot_FlashFile 类用于组织文件和目录的相关操作
  * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)
- * @author [Ouki](ouki.wang@dfrobot.com)
+ * @author [Arya](xue.peng@dfrobot.com)
  * @version  V1.0
- * @date  2019-07-13
- * @url https://github.com/ouki-wang/DFRobot_Sensor
+ * @date  2021-04-28
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
  */
+#ifndef FLASH_DBG
+#if 0
+#define FLASH_DBG(...) {Serial.print("["); Serial.print(__FUNCTION__); Serial.print("(): "); Serial.print(__LINE__); Serial.print(" ] "); Serial.println(__VA_ARGS__);}
+#else
+#define FLASH_DBG(...)
+#endif
+#endif
+
 #include <Arduino.h>
 #include "DFRobot_Flash.h"
 
@@ -145,7 +150,7 @@ bool DFRobot_FlashFile::open(DFRobot_FlashFile* dirFile, const char* fileName, u
     return true;
 }
 
-bool DFRobot_FlashFile::close(){//无法关闭根目录
+bool DFRobot_FlashFile::close(bool truncate){//无法关闭根目录
     if(!isOpen() || isRoot()) {
       FLASH_DBG("is not open or root dir");
       return false;
@@ -153,7 +158,7 @@ bool DFRobot_FlashFile::close(){//无法关闭根目录
 
     if(_type == TYPE_FAT_FILE_NORMAL){
       _flash->_pro.sync(_id);
-      if(!_flash->_pro.closeFile(_id)){
+      if(!_flash->_pro.closeFile(_id, truncate)){
         return false;
       } 
     }else{

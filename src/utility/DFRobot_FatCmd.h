@@ -1,18 +1,32 @@
 /*!
  * @file DFRobot_FatCmd.h
- * @brief 定义DFRobot_FatCmd 类的基础结构
- * @details 这是自定义的主机和从机通信的命令包集，通过这些功能函数能够得到发送的命令包具体内容，包括：
- * @n 获取读地址的命令包内容；
- * @n 获取修改地址的命令包内容；
- * @n 获取当前工作目录的命令包内容；
- * @n 获取返回根目录的命令包内容
- * @n 获取切换工作目录的命令包内容
+ * @brief 定义 DFRobot_DFR0870_Protocol 类的基础结构
+ * @details 此协议用于Arduino主控同Flash Memory Moudle模块交互，目前能实现的交互内容为：
+ * @n CMD_RESET            复位Flash Memory Moudle模块
+ * @n CMD_FLASH_INFO       读取Flash Memory Moudle容量存储信息
+ * @n CMD_READ_ADDR        读取IIC地址命令
+ * @n CMD_SET_ADDR         设置I2C地址命令（此命令模块掉电后生效）
+ * @n CMD_OPEN_FILE        打开文件
+ * @n CMD_CLOSE_FILE       关闭文件或截断并关闭文件
+ * @n CMD_WRITE_FILE       写文件命令
+ * @n CMD_READ_FILE        读文件命令
+ * @n CMD_SYNC_FILE        同步文件，将缓存数据写入实际文件中的命令
+ * @n CMD_SEEK_FILE        设置文件读写指针位置命令
+ * @n CMD_MKDIR            创建文件夹命令
+ * @n CMD_OPEN_DIR         打开目录命令
+ * @n CMD_CLOSE_DIR        关闭目录命令
+ * @n CMD_REMOVE           移除文件或目录
+ * @n CMD_FILE_ATTR        获取文件属性：0-文件或目录不存在 1-这是一个文件 2-FAT12根目录 3-FAT16根目录 4-FAT32根目录 5-子目录
+ * @n CMD_READ_DIR         读取目录下的所有文件项和目录项
+ * @n CMD_REWIND           回到读目录起始位置
+ * @n CMD_ABSPATH          获取当前目录或文件的绝对路径
+ * @n CMD_PARENTDIR        获取当前目录或文件的父级目录路径  
  * @copyright	Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
  * @license     The MIT License (MIT)
  * @author [Arya](xue.peng@dfrobot.com)
  * @version  V1.0
- * @date  2021-10-09
- * @url https://github.com/DFRobot/DFRobot_
+ * @date  2022-04-28
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
  */
 #ifndef __DFROBOT_FATCMD_H
 #define __DFROBOT_FATCMD_H
@@ -99,7 +113,7 @@ public:
    * @retval true  关闭成功
    * @retval false 关闭失败
    */
-  bool closeFile(int8_t id);
+  bool closeFile(int8_t id, bool truncate);
   /**
    * @fn writeFile
    * @brief 向文件写数据.
