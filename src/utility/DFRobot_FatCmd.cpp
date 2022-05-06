@@ -284,13 +284,14 @@ bool DFRobot_DFR0870_Protocol::getFlashInfo(uint8_t *fatType, uint32_t *capacity
     return false;
   }
   if(fatType) *fatType = responsePkt->buf[0];
-  if(capacity) *capacity = responsePkt->buf[1] | (responsePkt->buf[2] << 8) | (responsePkt->buf[3] << 16) | (responsePkt->buf[4] << 24);
-  if(freeSec) *freeSec = responsePkt->buf[5] | (responsePkt->buf[6] << 8) | (responsePkt->buf[7] << 16) | (responsePkt->buf[8] << 24);
-  if(maxFileNums) *maxFileNums = responsePkt->buf[9] | (responsePkt->buf[10] << 8);
+  if(capacity) *capacity = (uint32_t)responsePkt->buf[1] | ((uint32_t)responsePkt->buf[2] << 8) | ((uint32_t)responsePkt->buf[3] << 16) | ((uint32_t)responsePkt->buf[4] << 24);
+  if(freeSec) *freeSec = (uint32_t)responsePkt->buf[5] | ((uint32_t)responsePkt->buf[6] << 8) | ((uint32_t)responsePkt->buf[7] << 16) | ((uint32_t)responsePkt->buf[8] << 24);
+  if(maxFileNums) *maxFileNums = (uint16_t)responsePkt->buf[9] | ((uint16_t)responsePkt->buf[10] << 8);
   if(fatType) CMD_DBG(*fatType, HEX);
   if(capacity) CMD_DBG(*capacity, HEX);
   if(freeSec) CMD_DBG(*freeSec, HEX);
   if(maxFileNums) CMD_DBG(*maxFileNums, HEX);
+  
 
   free(responsePkt);
   return true;
@@ -393,8 +394,8 @@ bool DFRobot_DFR0870_Protocol::openFile(const char *name, int8_t pid, uint8_t of
     return false;
   }
   if(id)     *id     = responsePkt->buf[0];
-  if(curPos) *curPos = (responsePkt->buf[4] << 24) | (responsePkt->buf[3] << 16) | (responsePkt->buf[2] << 8) | responsePkt->buf[1];
-  if(size)   *size   = (responsePkt->buf[8] << 24) | (responsePkt->buf[7] << 16) | (responsePkt->buf[6] << 8) | responsePkt->buf[5];
+  if(curPos) *curPos = ((uint32_t)responsePkt->buf[4] << 24) | ((uint32_t)responsePkt->buf[3] << 16) | ((uint32_t)responsePkt->buf[2] << 8) | (uint32_t)responsePkt->buf[1];
+  if(size)   *size   = ((uint32_t)responsePkt->buf[8] << 24) | ((uint32_t)responsePkt->buf[7] << 16) | ((uint32_t)responsePkt->buf[6] << 8) | (uint32_t)responsePkt->buf[5];
   if(id)     CMD_DBG(*id, HEX);
   if(curPos) CMD_DBG(*curPos, HEX);    
   if(size)   CMD_DBG(*size, HEX);       
@@ -578,7 +579,7 @@ bool DFRobot_DFR0870_Protocol::seekFile(int8_t id, uint32_t pos){
     free(responsePkt);
     return false;
   }
-  uint32_t curpos = (responsePkt->buf[3] << 24) | (responsePkt->buf[2] << 16) | (responsePkt->buf[1] << 8) | responsePkt->buf[0];
+  uint32_t curpos = ((uint32_t)responsePkt->buf[3] << 24) | ((uint32_t)responsePkt->buf[2] << 16) | ((uint32_t)responsePkt->buf[1] << 8) | (uint32_t)responsePkt->buf[0];
   CMD_DBG(curpos);
   CMD_DBG(pos);
   return true;

@@ -92,6 +92,7 @@ bool DFRobot_FlashMoudle_IIC::recvData(void* pData, uint16_t size, bool endflag)
 #endif
         for(size_t i = 0; i < size; i++){
             pBuf[i] = _pWire->read();
+            DRV_DBG(pBuf[i],HEX);
             yield();
         }
         if(remain) pBuf += size;

@@ -43,11 +43,13 @@ public:
    * @brief DFRobot_ComCSV抽象类构造
    */
   DFRobot_ComCSV();
+
   /**
    * @fn ~DFRobot_ComCSV()
    * @brief 析构函数
    */
   ~DFRobot_ComCSV();
+
   /**
    * @fn begin
    * @brief 初始化
@@ -65,6 +67,7 @@ public:
    * @return 返回实际写入字节的大小
    */
   virtual size_t write(uint8_t val);
+
   /**
    * @fn write
    * @brief 向CSV文件字符串数据，用户单独调用这个函数是写同一项数据，如果需要换项，需手动写入字符',',write(",")
@@ -78,6 +81,7 @@ public:
       if (str == NULL) return 0;
       return write((const uint8_t *)str, strlen(str));
   }
+
   /**
    * @fn write
    * @brief 向CSV文件数组数据，用户单独调用这个函数是写同一项数据，如果需要换项，需手动写入字符','，
@@ -90,6 +94,7 @@ public:
   size_t write(const char *buffer, size_t size) {
       return write((const uint8_t *)buffer, size);
   }
+  
   /**
    * @fn print
    * @brief 向CSV文件写入一项数据，即写入单元格数据，增加一列单元格，print与print之间会用","分开

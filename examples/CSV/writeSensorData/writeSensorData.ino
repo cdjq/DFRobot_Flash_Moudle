@@ -68,7 +68,7 @@ void setup(){
 
 void loop() {
   if(number == COLLECTION_TIMES){
-    myFile.close();
+    myFile.close(true);
     Serial.println("write sensor data end!");
     while(1) yield();
   }
@@ -76,5 +76,5 @@ void loop() {
   value = analogRead(SENSOR_PIN);
   Serial.print("Write raw number: ");Serial.println(number);
   csv.print(__DATE__); csv.print(number); csv.println(value);
-  delay(1000);
+  delay(100);
 }
