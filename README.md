@@ -67,6 +67,7 @@ class DFRobot_FlashMoudle_IIC:
    * @retval 2 设备未找到
    */
   uint8_t begin(uint32_t freq = 1000);
+/***************************************IIC 接口操作 结束***************************************/
 
 /***************************************磁盘操作***************************************/
 class DFRobot_FlashMoudle:
@@ -153,7 +154,8 @@ class DFRobot_FlashMoudle:
    */
   boolean rmdir(const char *filepath);
   boolean rmdir(const String &filepath) { return rmdir(filepath.c_str()); }
-  
+/***************************************磁盘操作 结束***************************************/ 
+
 /***************************************文件操作***************************************/
 class DFRobot_File：
   /**
@@ -307,6 +309,7 @@ class DFRobot_File：
    * @brief Set the file's current position to zero.
    */
   void rewindDirectory(void);
+/***************************************文件操作 结束***************************************/
 
 /***************************************CSV文件写入操作***************************************/
 class DFRobot_CSV_0870:
@@ -470,6 +473,7 @@ class DFRobot_CSV_0870:
    * @return 返回实际写入字节的大小
    */
   size_t println(void);
+/***************************************CSV文件写入操作 结束***************************************/
   
 ```
 
