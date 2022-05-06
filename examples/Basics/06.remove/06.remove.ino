@@ -1,3 +1,15 @@
+/*!
+ * @file 06.remove.ino
+ * @brief 移除flash内的所有文件后，再创建一个名为SD的文件夹。
+ * 
+ * @copyright Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
+ * @license The MIT License (MIT)
+ * @author [Arya](xue.peng@dfrobot.com)
+ * @version V1.0
+ * @date 2021-11-04
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
+ */
+
 #include "DFRobot_Flash_Moudle.h"
 
 DFRobot_FlashMoudle_IIC iic(/*addr=*/0x55);

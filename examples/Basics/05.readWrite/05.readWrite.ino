@@ -1,3 +1,13 @@
+/*!
+ * @file 05.readWrite.ino
+ * @brief 文件读写操作。
+ * @copyright Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
+ * @license The MIT License (MIT)
+ * @author [Arya](xue.peng@dfrobot.com)
+ * @version V1.0
+ * @date 2021-11-04
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
+ */
 
 #include "DFRobot_Flash_Moudle.h"
 

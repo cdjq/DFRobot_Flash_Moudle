@@ -1,3 +1,13 @@
+/*!
+ * @file 04.listFiles.ino
+ * @brief 列出flash内的所有文件和目录。
+ * @copyright Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
+ * @license The MIT License (MIT)
+ * @author [Arya](xue.peng@dfrobot.com)
+ * @version V1.0
+ * @date 2021-11-04
+ * @url https://github.com/DFRobot/DFRobot_Flash_Moudle
+ */
 #include "DFRobot_Flash_Moudle.h"
 
 DFRobot_FlashMoudle_IIC iic(/*addr=*/0x55);
