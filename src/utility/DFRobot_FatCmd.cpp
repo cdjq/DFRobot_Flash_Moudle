@@ -504,7 +504,7 @@ MILLISLOOP:
         length = (responsePkt.lenH << 8) | responsePkt.lenL;
         if(responsePkt.state == STATUS_SUCCESS){
           total = (len > length) ? length : len;
-          readResponseData(data, total);
+          if(total) readResponseData(data, total);
           return total;
         }else{
           return 0;
