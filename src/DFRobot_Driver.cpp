@@ -36,8 +36,8 @@ uint8_t DFRobot_FlashMoudle_IIC::begin(uint32_t freq){
     }
     delay(500);
     _pWire->begin();
-    _pWire->beginTransmission(_addr);
     _pWire->setClock(freq);
+    _pWire->beginTransmission(_addr);
     byte ret = _pWire->endTransmission();
     if(ret != 0){
         DRV_DBG("device not found.");

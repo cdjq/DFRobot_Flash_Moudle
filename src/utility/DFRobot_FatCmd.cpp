@@ -750,7 +750,8 @@ uint8_t DFRobot_DFR0870_Protocol::getFileAttribute(int8_t pid, char *name){
     CMD_DBG("response packet fail.");
     return 0;
   }
-  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_FILE_ATTR) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen) ){
+  if((responsePkt->state != STATUS_SUCCESS) || (responsePkt->cmd != CMD_FILE_ATTR) || (((responsePkt->lenH << 8) | responsePkt->lenL) != cmdStu.responseLen))
+  {
     CMD_DBG("response recv packet failrd.");
     free(responsePkt);
     return 0;

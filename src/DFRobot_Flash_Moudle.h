@@ -316,7 +316,7 @@ public:
    * @retval 1 DFRobot_FlashMoudle_IIC构造中传入的pWire为NULL
    * @retval 2 设备未找到
    */
-  uint8_t begin(uint32_t freq = 1000);
+  uint8_t begin(uint32_t freq = 100000);
 
   /**
    * @fn sendData
