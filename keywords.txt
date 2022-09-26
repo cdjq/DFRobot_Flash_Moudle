@@ -76,6 +76,22 @@ recvData	KEYWORD2
 flush	KEYWORD2
 begin	KEYWORD2
 
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DFRobot_Flash	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+init	KEYWORD2
+size	KEYWORD2
+fatType	KEYWORD2
+reset	KEYWORD2
+setI2CAddress	KEYWORD2
+getI2CAddress	KEYWORD2
+
 FILE_READ	LITERAL1
 FILE_WRITE	LITERAL1
 FILE_APPEND	LITERAL1

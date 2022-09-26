@@ -34,10 +34,52 @@ public:
 
   DFRobot_Flash();
   ~DFRobot_Flash();
+  /**
+   * @fn init
+   * @brief 初始化通信接口
+   * 
+   * @param drv DFRobot_Driver指针对象
+   * @return uint8_t 初始化代码
+   */
   uint8_t init(DFRobot_Driver *drv);
+  /**
+   * @fn size
+   * @brief 获取磁盘的大小，单位字节
+   * 
+   * @return uint32_t 
+   */
   uint32_t size();
+  /**
+   * @fn fatType
+   * @brief 获取文件系统的类型
+   * 
+   * @return uint8_t 文件系统的类型
+   */
   uint8_t fatType();
+  /**
+   * @fn reset
+   * @brief 模块复位
+   * 
+   * @return true  复位成功
+   * @return false 复位失败
+   */
   bool reset();
+  /**
+   * @fn getI2CAddress
+   * @brief 设置模块的I2C地址.
+   * @param addr  1~127 7位I2C地址
+   * @return 设置状态.
+   * @retval true  设置成功
+   * @retval false 设置失败
+   */
+  bool setI2CAddress(uint8_t addr);
+  /**
+   * @fn getI2CAddress
+   * @brief 获取模块的I2C地址.
+   * @return 模块的I2C地址.
+   */
+  uint8_t getI2CAddress();
+
   DFRobot_DFR0870_Protocol _pro;
 
 private:

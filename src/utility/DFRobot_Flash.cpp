@@ -70,7 +70,14 @@ uint8_t DFRobot_Flash::init(DFRobot_Driver *drv){
 }
 
 bool DFRobot_Flash::reset(){
-    return _pro.reset();
+  return _pro.reset();
+}
+bool DFRobot_Flash::setI2CAddress(uint8_t addr){
+  return _pro.setI2CAddress(addr);
+
+}
+uint8_t DFRobot_Flash::getI2CAddress(){
+  return _pro.getI2CAddress();
 }
 
 uint32_t DFRobot_Flash::size(){
